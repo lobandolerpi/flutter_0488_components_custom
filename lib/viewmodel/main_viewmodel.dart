@@ -3,8 +3,13 @@ import '../model/greeting_data.dart';
 import 'dart:async';
 
 class MainViewModel extends ChangeNotifier {
-  // 1. EL MODEL (Les dades fixes)
-  final GreetingData _data = GreetingData();
+  // 1. EL MODEL (Les dades fixes).
+  final GreetingData _data;
+
+  // Per estàndards de desacoblament model-viewmodel
+  // és millor que el constructor rebi les classes d'estats, no que les crei.
+  // creem les instancies d'estat al main.
+  MainViewModel(this._data);
 
   // 2. L'ESTAT (La part variable)
   bool _isVisible = false;

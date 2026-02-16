@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'viewmodel/main_viewmodel.dart';
+import 'view/main_screen.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const App0488());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class App0488 extends StatelessWidget {
+  const App0488({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(child: Text('Hola Món! Preparats per la Sessió 1A')),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: ChangeNotifierProvider(
+        // Creem la instància única del ViewModel.
+        create: (_) => MainViewModel(),
+        child: const MainScreen(),
       ),
     );
   }

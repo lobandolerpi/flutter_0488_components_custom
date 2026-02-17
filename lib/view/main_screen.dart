@@ -26,28 +26,44 @@ class MainScreen extends StatelessWidget {
 
             // 1. LECTURA DE L'ESTAT: Mostrem el text descriptiu del gest
             Text(
-              //"Últim gest: ${vm.estatPanell.missatgeGest}"
-              "CANVIAR: ultim gest: ",
+              "Últim gest: ${vm.estatPanell.missatgeGest}",
               style: const TextStyle(fontSize: 18, color: Colors.blueGrey),
             ),
             const SizedBox(height: 5),
 
             // 2. LECTURA DE L'ESTAT: Mostrem les coordenades locals
             Text(
-              //"Coordenades: X: ${vm.estatPanell.posX.toInt()}, Y: ${vm.estatPanell.posY.toInt()}",
-              "CANVIAR: coordenades: ",
+              "Coordenades: X: ${vm.estatPanell.posX.toInt()}, Y: ${vm.estatPanell.posY.toInt()}",
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
 
-            const SizedBox(height: 40, width: 800),
+            const SizedBox(height: 40),
 
-            // 3. EL NOSTRE WIDGET CUSTOM DE MENTIDA
-            Container(
-              width: 800,
-              height: 200,
-              color: Colors.amber,
-              alignment: AlignmentGeometry.center,
-              child: Text("AQUI VA EL WIDGET", textAlign: TextAlign.center),
+            // 3. EL NOSTRE WIDGET CUSTOM
+            PanellInteractiuWidget(
+              // Dades de domini (Estàtiques)
+              config: const PanellConfig(
+                titol: "WIDGET PANELL: Àrea de Pràctiques 1B",
+                colorFons: Color.fromARGB(255, 195, 196, 192),
+              ),
+
+              // Paràmetres d'estil (Reacció dinàmica a l'estat)
+              colorVora: vm.estatPanell.colorVora,
+              alcada: 250,
+
+              // --- GESTIÓ D'ESDEVENIMENTS (Callbacks cap al ViewModel) ---
+              onAccioDetectada: (text) {
+                vm.actualitzarMissatge(text);
+              },
+
+              onPosicioDetectada: (pos) {
+                vm.actualitzarCoordenades(pos);
+              },
+
+              // S'executarà al onTapUp, onTapCancel i onPanEnd
+              onFiInteraccio: () {
+                vm.canviarColorAleatori();
+              },
             ),
 
             // 3. EL NOSTRE WIDGET CUSTOM DE VERITAT

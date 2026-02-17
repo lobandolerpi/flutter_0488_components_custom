@@ -1,32 +1,48 @@
 import 'package:flutter/material.dart';
-import '../model/greeting_data.dart';
+import 'package:flutter_0488_components_custom/model/panell_ui_state_data.dart';
+import 'dart:math';
 import 'dart:async';
 
 class MainViewModel extends ChangeNotifier {
-  // 1. EL MODEL (Les dades fixes).
-  final GreetingData _data;
+  // 1. EL MODEL (Les dades del panell).
+  PanellUiState _estatPanell;
+  PanellUiState get estatPanell => _estatPanell;
 
   // Per estàndards de desacoblament model-viewmodel
   // és millor que el constructor rebi les classes d'estats, no que les crei.
   // creem les instancies d'estat al main.
-  MainViewModel(this._data);
+  MainViewModel(this._estatPanell);
 
-  // 2. L'ESTAT (La part variable)
-  bool _isVisible = false;
+  // MÈTODES PER CANVIAR DADES DE L'ESTAT.
+  void actualitzarMissatge(String nouMissatge) {
+    // Creem un nou estat copiant l'anterior i canviant només el missatge
+    _estatPanell = _estatPanell.copyWith(missatgeGest: nouMissatge);
+    notifyListeners();
+  }
 
-  // 3. GETTERS (El que la vista consumeix)
-  // Si és visible, retornem el missatge. Si no, string buit.
-  String get greetingText => _isVisible ? _data.message : "";
+  void actualitzarCoordenades(Offset pos) {
+    _estatPanell = _estatPanell.copyWith(posX: pos.dx, posY: pos.dy);
+    notifyListeners();
+  }
 
-  // Decidim quin text de botó toca segons l'estat
-  String get buttonText => _isVisible ? _data.btnHideText : _data.btnShowText;
+  void canviarColorAleatori() {
+    final llistaColors = [
+      Colors.red,
+      Colors.cyan,
+      Colors.yellow,
+      Colors.black,
+      Colors.green,
+      Colors.deepPurple,
+    ];
+    final random = Random();
+    final colorActual = _estatPanell.colorVora;
+    Color nouColorTMP;
+    do {
+      nouColorTMP = llistaColors[random.nextInt(llistaColors.length)];
+    } while (nouColorTMP == colorActual);
+    final nouColorFinal = nouColorTMP;
 
-  // Getter per saber si hem de pintar el text en color o no (opcional, per UI)
-  bool get isVisible => _isVisible;
-
-  // 4. ACCIÓ (Canviar l'estat)
-  void toggleVisibility() {
-    _isVisible = !_isVisible;
-    notifyListeners(); // Avisem a la vista.
+    _estatPanell = _estatPanell.copyWith(colorVora: nouColorFinal);
+    notifyListeners();
   }
 }

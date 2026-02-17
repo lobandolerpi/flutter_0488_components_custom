@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/main_viewmodel.dart';
+import '../view/widgets/panell_gestos_widget.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -11,29 +12,45 @@ class MainScreen extends StatelessWidget {
     final vm = context.watch<MainViewModel>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("MVVM Pur (Sessió 00)")),
-      body: Center(
+      appBar: AppBar(title: const Text("Sessió 1B Gestos i Estat UI")),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Text de Salutació (El ViewModel decideix si surt text o buit)
+            const Text(
+              "Monitorització del panell:",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 15),
+
+            // 1. LECTURA DE L'ESTAT: Mostrem el text descriptiu del gest
             Text(
-              vm.greetingText,
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: Colors.blueAccent,
-              ),
-              textAlign: TextAlign.center,
+              //"Últim gest: ${vm.estatPanell.missatgeGest}"
+              "CANVIAR: ultim gest: ",
+              style: const TextStyle(fontSize: 18, color: Colors.blueGrey),
+            ),
+            const SizedBox(height: 5),
+
+            // 2. LECTURA DE L'ESTAT: Mostrem les coordenades locals
+            Text(
+              //"Coordenades: X: ${vm.estatPanell.posX.toInt()}, Y: ${vm.estatPanell.posY.toInt()}",
+              "CANVIAR: coordenades: ",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
 
-            const SizedBox(height: 50),
+            const SizedBox(height: 40),
+            // 3. EL NOSTRE WIDGET CUSTOM
+            Text("AQUI VA EL WIDGET"),
+            // 3. EL NOSTRE WIDGET CUSTOM
+            //PanellInteractiuWidget(
+            // Dades de domini (Estàtiques)
 
-            // Botó d'Acció
-            ElevatedButton(
-              onPressed: vm.toggleVisibility,
-              child: Text(vm.buttonText), // El text ve del Model via ViewModel
-            ),
+            // Paràmetres d'estil (Reacció dinàmica a l'estat)
+
+            // --- GESTIÓ D'ESDEVENIMENTS (Callbacks cap al ViewModel) ---
+
+            //),
           ],
         ),
       ),

@@ -32,9 +32,10 @@ class PanellInteractiuWidget extends StatelessWidget {
   const PanellInteractiuWidget({
     super.key, // això és l'identificador únic del giny, fem servir el mètode del pare per crear-lo.
     required this.config, // Es necessari les dades de configuració del widget.
-    required this.onAccioDetectada, // Callback necessari
-    required this.onPosicioDetectada, // Callback necessari
-    this.onFiInteraccio, // Pot ser null -> No és necessari
+
+    //required this.onAccioDetectada, // Callback necessari
+    //required this.onPosicioDetectada, // Callback necessari
+    //this.onFiInteraccio, // Pot ser null -> No és necessari
     this.colorVora = Colors.transparent, // Valor per defecte
     this.alcada = 200.0, // Valor per defecte
   });

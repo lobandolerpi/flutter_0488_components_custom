@@ -65,16 +65,6 @@ class MainScreen extends StatelessWidget {
                 vm.canviarColorAleatori();
               },
             ),
-
-            // 3. EL NOSTRE WIDGET CUSTOM DE VERITAT
-            //PanellInteractiuWidget(
-            // Dades de domini (Estàtiques)
-
-            // Paràmetres d'estil (Reacció dinàmica a l'estat)
-
-            // --- GESTIÓ D'ESDEVENIMENTS (Callbacks cap al ViewModel) ---
-
-            //),
           ],
         ),
       ),

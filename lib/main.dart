@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_0488_components_custom/model/panell_ui_state_data.dart';
 import 'package:provider/provider.dart';
 import 'viewmodel/main_viewmodel.dart';
 import 'view/main_screen.dart';
-import '../model/greeting_data.dart';
 
 void main() {
   runApp(const App0488());
@@ -14,9 +14,9 @@ class App0488 extends StatelessWidget {
   /// Funció de factoria per crear el ViewModel.
   MainViewModel createViewModel(BuildContext context) {
     // 1. Instanciem el model (Dades pures)
-    final dades = GreetingData();
+    final dadesPanell = const PanellUiState();
     // 2. Instanciem el ViewModel injectant-li el model (Desacoblament)
-    final viewModel = MainViewModel(dades);
+    final viewModel = MainViewModel(dadesPanell);
     return viewModel;
   }
 

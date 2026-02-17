@@ -39,10 +39,18 @@ class MainScreen extends StatelessWidget {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
 
-            const SizedBox(height: 40),
-            // 3. EL NOSTRE WIDGET CUSTOM
-            Text("AQUI VA EL WIDGET"),
-            // 3. EL NOSTRE WIDGET CUSTOM
+            const SizedBox(height: 40, width: 800),
+
+            // 3. EL NOSTRE WIDGET CUSTOM DE MENTIDA
+            Container(
+              width: 800,
+              height: 200,
+              color: Colors.amber,
+              alignment: AlignmentGeometry.center,
+              child: Text("AQUI VA EL WIDGET", textAlign: TextAlign.center),
+            ),
+
+            // 3. EL NOSTRE WIDGET CUSTOM DE VERITAT
             //PanellInteractiuWidget(
             // Dades de domini (Estàtiques)
 

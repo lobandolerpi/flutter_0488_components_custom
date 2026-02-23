@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_0488_components_custom/model/galery_data.dart';
 
 class PanellUiState {
   final String missatgeGest; // Estat del gest (Text)
@@ -6,6 +7,8 @@ class PanellUiState {
   final double posY; // Estat de la posició (Coordenada Y)
   final Color colorVora; // Estat de la vora
   final double alcada; // Estat de la posició (Coordenada Y)
+  final List<int> seleccionats;
+  final List<ElementImatge> llistaImatges;
 
   const PanellUiState({
     this.missatgeGest = "Esperant interacció...",
@@ -13,6 +16,11 @@ class PanellUiState {
     this.posY = 0.0,
     this.colorVora = Colors.transparent,
     this.alcada = 400.0,
+    this.seleccionats = const <int>[], // 1C, ATENCIÓ
+    this.llistaImatges = const <ElementImatge>[], // 1C, ATENCIÓ
+    // Les lliste les hem de declarar inmutables a l'arquitectura MVVM reactiva.
+    // El metode copyWith hauria de rebre una llista nova const
+    // quan la modificquem hem de crear una nova i modificarla.
   });
 
   // Mètode clau (copyWith): Permet crear una còpia de l'estat actual
@@ -23,6 +31,8 @@ class PanellUiState {
     double? posY,
     Color? colorVora,
     double? alcada,
+    List<int>? seleccionats,
+    List<ElementImatge>? llistaImatges,
   }) {
     return PanellUiState(
       missatgeGest: missatgeGest ?? this.missatgeGest,
@@ -30,6 +40,10 @@ class PanellUiState {
       posY: posY ?? this.posY,
       colorVora: colorVora ?? this.colorVora,
       alcada: alcada ?? this.alcada,
+      seleccionats:
+          seleccionats ?? this.seleccionats, // ULL AMB AIXÔ JA EN PARLAREM
+      llistaImatges:
+          llistaImatges ?? this.llistaImatges, // ULL AMB AIXÔ JA EN PARLAREM
     );
   }
 }

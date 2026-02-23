@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_0488_components_custom/model/galery_data.dart';
 import 'package:flutter_0488_components_custom/model/panell_ui_state_data.dart';
 import 'dart:math';
+import 'dart:io'; // Per fitxers
 import 'dart:async';
 
 class MainViewModel extends ChangeNotifier {
@@ -44,5 +46,59 @@ class MainViewModel extends ChangeNotifier {
 
     _estatPanell = _estatPanell.copyWith(colorVora: nouColorFinal);
     notifyListeners();
+  }
+
+  void carregarImatgesDirectori(String str) {
+    try {
+      final directori = Directory(str); // Això és semblant al File de Java
+      if (directori.existsSync()) {
+        List<FileSystemEntity> fitxers = directori
+            .listSync(); // Que hi ha a la carpeta
+        List<ElementImatge> imatges =
+            <ElementImatge>[]; // llista d'objectes buida redimensionable
+
+        int comptador = 0;
+        for (FileSystemEntity f in fitxers) {
+          // loop per fitxer al directori
+          if (f.path.endsWith(".png")) {
+            // Si es fitxer png creo objecte imatge
+            ElementImatge imgNew = ElementImatge(
+              id: comptador,
+              titol: f.path.split(Platform.pathSeparator).last,
+              path: f.path,
+            );
+            comptador++;
+            imatges.add(imgNew);
+          }
+        }
+        // Quan estic de modificar la llista, la faig final
+        final List<ElementImatge> imatgesFinal = List.of(imatges);
+        // actualitzo estat i notifico
+        _estatPanell = _estatPanell.copyWith(llistaImatges: imatgesFinal);
+        notifyListeners();
+      }
+    } catch (e) {
+      // Capturo l'errada
+      _estatPanell = _estatPanell.copyWith(
+        missatgeGest: "Error llegint carpeta",
+        colorVora: Colors.red,
+      );
+    }
+  }
+
+  void gestionarSeleccio(int id, TipusAccio accio) {
+    if (accio == TipusAccio.seleccionar) {
+      // Creem una COPIA de la llista (per referència)
+      final novaLlista = List<int>.from(_estatPanell.seleccionats);
+
+      if (novaLlista.contains(id)) {
+        novaLlista.remove(id);
+      } else {
+        novaLlista.add(id);
+      }
+
+      _estatPanell = _estatPanell.copyWith(seleccionats: novaLlista);
+      notifyListeners();
+    }
   }
 }

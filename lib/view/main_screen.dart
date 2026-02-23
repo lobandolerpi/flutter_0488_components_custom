@@ -43,27 +43,25 @@ class MainScreen extends StatelessWidget {
             PanellInteractiuWidget(
               // Dades de domini (Estàtiques)
               config: const PanellConfig(
-                titol: "WIDGET PANELL: Àrea de Pràctiques 1B",
+                titol: "WIDGET PANELL FOTOS: Àrea de Pràctiques 1C",
                 colorFons: Color.fromARGB(255, 195, 196, 192),
               ),
 
               // Paràmetres d'estil (Reacció dinàmica a l'estat)
               colorVora: vm.estatPanell.colorVora,
               alcada: 250,
+              imatges: vm.estatPanell.llistaImatges,
+              seleccionats: vm.estatPanell.seleccionats,
 
               // --- GESTIÓ D'ESDEVENIMENTS (Callbacks cap al ViewModel) ---
-              onAccioDetectada: (text) {
-                vm.actualitzarMissatge(text);
-              },
+              onAccio: (id, accio) => vm.gestionarSeleccio(id, accio),
+            ),
 
-              onPosicioDetectada: (pos) {
-                vm.actualitzarCoordenades(pos);
-              },
-
-              // S'executarà al onTapUp, onTapCancel i onPanEnd
-              onFiInteraccio: () {
-                vm.canviarColorAleatori();
-              },
+            // Afegiu un botó a sota per disparar la lectura inicial:
+            ElevatedButton.icon(
+              onPressed: () => vm.carregarImatgesDirectori("./data/imatges"),
+              icon: const Icon(Icons.refresh),
+              label: const Text("Escanejar carpeta data/fotos"),
             ),
           ],
         ),

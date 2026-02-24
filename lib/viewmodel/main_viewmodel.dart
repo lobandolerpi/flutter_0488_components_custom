@@ -3,7 +3,6 @@ import 'package:flutter_0488_components_custom/model/galery_data.dart';
 import 'package:flutter_0488_components_custom/model/panell_ui_state_data.dart';
 import 'dart:math';
 import 'dart:io'; // Per fitxers
-import 'dart:async';
 
 class MainViewModel extends ChangeNotifier {
   // 1. EL MODEL (Les dades del panell).

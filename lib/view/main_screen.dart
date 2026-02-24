@@ -12,32 +12,17 @@ class MainScreen extends StatelessWidget {
     final vm = context.watch<MainViewModel>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Sessió 1B Gestos i Estat UI")),
+      // Aqui hi haurà overflow
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              "Monitorització del panell:",
+              "Panell amb 2 zones, miniatures i imatge:",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
-
-            // 1. LECTURA DE L'ESTAT: Mostrem el text descriptiu del gest
-            Text(
-              "Últim gest: ${vm.estatPanell.missatgeGest}",
-              style: const TextStyle(fontSize: 18, color: Colors.blueGrey),
-            ),
-            const SizedBox(height: 5),
-
-            // 2. LECTURA DE L'ESTAT: Mostrem les coordenades locals
-            Text(
-              "Coordenades: X: ${vm.estatPanell.posX.toInt()}, Y: ${vm.estatPanell.posY.toInt()}",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-
-            const SizedBox(height: 40),
 
             // 3. EL NOSTRE WIDGET CUSTOM
             PanellInteractiuWidget(
@@ -49,7 +34,7 @@ class MainScreen extends StatelessWidget {
 
               // Paràmetres d'estil (Reacció dinàmica a l'estat)
               colorVora: vm.estatPanell.colorVora,
-              alcada: 250,
+              alcada: 700,
               imatges: vm.estatPanell.llistaImatges,
               seleccionats: vm.estatPanell.seleccionats,
 

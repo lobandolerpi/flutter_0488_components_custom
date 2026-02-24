@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_0488_components_custom/model/galery_data.dart';
 
 /// Model d'estat per a la configuració visual del panell (RA 3.3)
 class PanellConfig {
@@ -22,104 +25,156 @@ class PanellInteractiuWidget extends StatelessWidget {
   // 2. Paràmetres d'estil opcionals. Aquests si que varien durant la vida del widget, però amb copies.
   final Color colorVora;
   final double alcada;
+  final List<ElementImatge> imatges; // Dada de negoci
+  final List<int> seleccionats; // Estat de selecció
 
   // 3. Callbacks per a la gestió d'esdeveniments (RA 3.4)
-
-  /// Retorna un text descriptiu del gest
-  final Function(String) onAccioDetectada; // Funció que retornarà un string.
-
-  /// Retorna les coordenades exactes del clic (Dada complexa)
-  final Function(Offset) onPosicioDetectada;
-
-  /// Callback sense paràmetres (VoidCallback) acabar interacció, que es pot escoltar a diversos llocs
-  final VoidCallback? onFiInteraccio;
+  final Function(int, TipusAccio) onAccio; // Callback complex
 
   // El constructor
   const PanellInteractiuWidget({
     super.key, // això és l'identificador únic del giny, fem servir el mètode del pare per crear-lo.
     required this.config, // Es necessari les dades de configuració del widget.
-    required this.onAccioDetectada, // Callback necessari
-    required this.onPosicioDetectada, // Callback necessari
-    this.onFiInteraccio, // Pot ser null -> No és necessari
+    required this.imatges,
+    required this.seleccionats,
+    required this.onAccio,
     this.colorVora = Colors.transparent, // Valor per defecte
     this.alcada = 200.0, // Valor per defecte
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      // PRIMER ELS GESTOS, DEFINEIXEN QUE PASSA QUAN L'USUARI INTERACTUA.
-      // --- Gest inicial ---
-      onTapDown: (detalls) {
-        // quan l'usuari toca la pantalla o clicka "onTapDown"
-        // El Framework de Flutter en tems d'execució, detecta l'esdeveniment i empaqueta tota la informació.
-        // l'objecte que és de tipus TapDownDetails, i nosaltres li diem "detalls"
-        onPosicioDetectada(detalls.localPosition);
-        // Quan aixó passa, nosaltres volem executar el mètode onPosicioDetectada
-        // que necessita un objecteOffset per saber les coordenades.
-        // li passim la part de detalls que són aquestes coordenades.
-      },
+    // Darrera imatge seleccionada per veure-la gran:
+    final ElementImatge? imatgeGran =
+        seleccionats
+            .isNotEmpty // terna
+        ? imatges.firstWhere(
+            (imgParametreLambda) => imgParametreLambda.id == seleccionats.last,
+          ) // si no es buit Lamba que torna la imatge amb el criteri LAST
+        : (imatges.isNotEmpty
+              ? imatges.first
+              : null); // si seleccionat es buit, un altre tera, ara la primera de la llista o nul.
 
-      // --- Gestos de click (Tap) ---
-      onTap: () => onAccioDetectada("Click confirmat"),
-      onLongPress: () => onAccioDetectada("Pulsació llarga"),
-      // --- Gest secundari (Botó dret) ---
-      onSecondaryTap: () => onAccioDetectada("Botó dret"),
+    // AnimatedContainer, per poder fer "animacions" transicions suaus.
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      height: alcada,
+      decoration: BoxDecoration(
+        // BoxDecoration ens permet modificat la caixa exterior del giny (cantonades, vores, etc.)
+        color: config.colorFons,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: colorVora, width: 3),
+      ),
+      // RECUPEREM EL GESTURE DETECTOR GLOBAL (Sessió 1B)
+      // L'emboliquem aquí perquè detecti qualsevol interacció dins del panell.
+      // Encara que avui no l'usem, el necessitarem a la Sessió 1D per detectar
+      // el "Swipe" (lliscament) per passar la foto gran cap a la dreta o esquerra.
+      child: GestureDetector(
+        // Per poder detectar els gestos. De moment no ho farem
+        // TODO
+        // onHorizontalDragEnd: (details) => funcioPerPassarFoto(),
+        // onTapDown: (details) => funcioPerDetectarClicLliure(),
 
-      // --- Gestos de moviment (Pan) ---
-      onPanUpdate: (detalls) {
-        onPosicioDetectada(detalls.localPosition);
-        onAccioDetectada("Arrossegant..");
-      },
+        // Column: Per apilar widgets => zones una sobre l'altre..
+        child: Column(
+          children: [
+            // =========================================================
+            // ZONA 1: EL VISOR (Imatge gran)
+            // =========================================================
+            // Amb el flex: 3, li estem dient que aquesta zona ocuparà
+            // 3 quartes parts (75%) de l'alçada total disponible.
+            Expanded(
+              // Expanded: "Ocupa tot l'espai que sobri de la columna".
+              flex:
+                  3, // El pes dintre de la columne. flex 3 i flex 1, significa 3/4 (75%)
+              child: Container(
+                // Container intern per donar marge i un fons fosc a la foto gran
+                width: double.infinity, // Ocupa tota l'amplada possible
+                margin: const EdgeInsets.all(
+                  // Espai exterior (aire al voltant)
+                  8,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      Colors.black12, // Fons lleugerament gris per contrastar
+                  borderRadius: BorderRadius.circular(10),
+                ),
 
-      // --- FI DE LES INTERACCIONS
-      // (Executem el 3r Callback) si no es null i a tots els seus posibles desencadenants.
-      onTapUp: (detalls) {
-        // S'acaba el click
-        if (onFiInteraccio != null) onFiInteraccio!();
-      },
-      onTapCancel: () {
-        // Comencem a moure el dit o ratoli.
-        if (onFiInteraccio != null) onFiInteraccio!();
-      },
-      onPanEnd: (_) {
-        // S'acaba el Pan
-        onAccioDetectada("Fi del moviment");
-        if (onFiInteraccio != null) onFiInteraccio!();
-      },
+                // Si tenim una foto per mostrar, la pintem. Si no, mostrem un text.
+                child: imatgeGran != null
+                    // Image.file: Llegeix un fitxer físic del disc dur.
+                    // BoxFit.contain: Escala la imatge perquè càpiga sencera sense deformar-se.
+                    ? Image.file(File(imatgeGran.path), fit: BoxFit.contain)
+                    : const Center(
+                        // Center: Centra el text "Carpeta buida..." vertical i horitzontalment.
+                        child: Text("Carpeta buida o sense selecció"),
+                      ),
+              ),
+            ),
 
-      // SEGON EL COMPONENT TAL COM ES DIMUIXA
-      child: AnimatedContainer(
-        // AnimatedContainer, ens permetrar fer animacions per interaccions en el futur.
-        duration: const Duration(
-          milliseconds: 300,
-        ), // Quant duraran les animacions
-        width: double.infinity, // Tota la amplada
-        height: alcada, // alçada pot canviar amb estils.
-        decoration: BoxDecoration(
-          // BoxDecoration per fer visual
-          // ATENCIó !!! El color de fons no és estil, és estat del component.
-          color: config.colorFons,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: colorVora, width: 3),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 8,
-              offset: Offset(2, 4),
+            // Divider: Dibuixa una línia horitzontal fina per separar les dues zones.
+            const Divider(height: 1),
+
+            // =========================================================
+            // ZONA 2: LA GALERIA (Miniatures inferiors)
+            // =========================================================
+            Expanded(
+              flex:
+                  1, // El pes dintre de la columne. flex 3 i flex 1, significa 1/4 (25%)
+              // SingleChildScrollView: per evitar l'error de "Overflow"
+              // Permet que el contingut interior es pugui desplaçar (fer scroll) si no hi cap a la pantalla.
+              child: SingleChildScrollView(
+                scrollDirection: Axis
+                    .horizontal, // Fem que l'scroll sigui d'esquerra a dreta (tipus Reel)
+                padding: const EdgeInsets.all(8),
+
+                // Row: Organitza les miniatures una al costat de l'altra.
+                // A diferència del WRAP, el Row no salta de línia, per això necessita l'ScrollView.
+                child: Row(
+                  // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
+                  children: imatges.map((img) {
+                    // Mirem si l'ID d'aquesta imatge està dins de la llista de seleccionats
+                    final isSelected = seleccionats.contains(img.id);
+
+                    // GestureDetector (Local): Aquest és específic de cada miniatura.
+                    // És el que tradueix el toc de l'usuari a la lògica (seleccionar)
+                    return GestureDetector(
+                      onTap: () => onAccio(img.id, TipusAccio.seleccionar),
+
+                      // Container de cada miniatura, per dibuixar la vora blava si està seleccionada
+                      child: Container(
+                        margin: const EdgeInsets.only(
+                          right: 10,
+                        ), // Espai entre fotos
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.blue
+                                : Colors.transparent,
+                            width: 2,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+
+                        // ClipRRect: "Retalla" les cantonades de la imatge filla perquè no
+                        // sobresurti del contenidor arrodonit. (Molt útil per estètica).
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          // BoxFit.cover: Escala la imatge per omplir el quadrat, retallant el que sobri.
+                          child: Image.file(
+                            File(img.path),
+                            width: 70,
+                            height: 70,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(), // Converteix el resultat del map en una List<Widget>
+                ),
+              ),
             ),
           ],
-        ),
-        child: Center(
-          child: Text(
-            // ATENCIó !!! El color de fons no és estil, és estat del component.
-            config.titol,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
         ),
       ),
     );

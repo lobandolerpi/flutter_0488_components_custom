@@ -69,24 +69,30 @@ class PanellInteractiuWidget extends StatelessWidget {
       // L'emboliquem aquí perquè detecti qualsevol interacció dins del panell.
       // Encara que avui no l'usem, el necessitarem a la Sessió 1D per detectar
       // el "Swipe" (lliscament) per passar la foto gran cap a la dreta o esquerra.
-      child: GestureDetector(
-        // Per poder detectar els gestos. De moment no ho farem
-        // TODO
-        // onHorizontalDragEnd: (details) => funcioPerPassarFoto(),
-        // onTapDown: (details) => funcioPerDetectarClicLliure(),
 
-        // Column: Per apilar widgets => zones una sobre l'altre..
-        child: Column(
-          children: [
-            // =========================================================
-            // ZONA 1: EL VISOR (Imatge gran)
-            // =========================================================
-            // Amb el flex: 3, li estem dient que aquesta zona ocuparà
-            // 3 quartes parts (75%) de l'alçada total disponible.
-            Expanded(
-              // Expanded: "Ocupa tot l'espai que sobri de la columna".
-              flex:
-                  3, // El pes dintre de la columne. flex 3 i flex 1, significa 3/4 (75%)
+      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+      // @@    child: GestureDetector(          @@
+      // @@  Atenció: Arena dels gestos, explicar  @@
+      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+      // Per poder detectar els gestos. De moment no ho farem
+      // TODO
+      // onHorizontalDragEnd: (details) => funcioPerPassarFoto(),
+      // onTapDown: (details) => funcioPerDetectarClicLliure(),
+
+      // Column: Per apilar widgets => zones una sobre l'altre..
+      child: Column(
+        children: [
+          Expanded(
+            // Expanded: "Ocupa tot l'espai que sobri de la columna".
+            flex:
+                3, // El pes dintre de la columna. flex 3 i flex 1, significa 3/4 (75%)
+            child: GestureDetector(
+              // GestureDetector (Local): Aquest és específic de la imatge gran
+              // =========================================================
+              // ZONA 1: EL VISOR (Imatge gran)
+              // =========================================================
+              // Amb el flex: 3, li estem dient que aquesta zona ocuparà
+              // 3 quartes parts (75%) de l'alçada total disponible.
               child: Container(
                 // Container intern per donar marge i un fons fosc a la foto gran
                 width: double.infinity, // Ocupa tota l'amplada possible
@@ -111,72 +117,71 @@ class PanellInteractiuWidget extends StatelessWidget {
                       ),
               ),
             ),
+          ),
 
-            // Divider: Dibuixa una línia horitzontal fina per separar les dues zones.
-            const Divider(height: 1),
+          // Divider: Dibuixa una línia horitzontal fina per separar les dues zones.
+          const Divider(height: 1),
 
-            // =========================================================
-            // ZONA 2: LA GALERIA (Miniatures inferiors)
-            // =========================================================
-            Expanded(
-              flex:
-                  1, // El pes dintre de la columne. flex 3 i flex 1, significa 1/4 (25%)
-              // SingleChildScrollView: per evitar l'error de "Overflow"
-              // Permet que el contingut interior es pugui desplaçar (fer scroll) si no hi cap a la pantalla.
-              child: SingleChildScrollView(
-                scrollDirection: Axis
-                    .horizontal, // Fem que l'scroll sigui d'esquerra a dreta (tipus Reel)
-                padding: const EdgeInsets.all(8),
+          // =========================================================
+          // ZONA 2: LA GALERIA (Miniatures inferiors)
+          // =========================================================
+          Expanded(
+            flex:
+                1, // El pes dintre de la columne. flex 3 i flex 1, significa 1/4 (25%)
+            // SingleChildScrollView: per evitar l'error de "Overflow"
+            // Permet que el contingut interior es pugui desplaçar (fer scroll) si no hi cap a la pantalla.
+            child: SingleChildScrollView(
+              scrollDirection: Axis
+                  .horizontal, // Fem que l'scroll sigui d'esquerra a dreta (tipus Reel)
+              padding: const EdgeInsets.all(8),
 
-                // Row: Organitza les miniatures una al costat de l'altra.
-                // A diferència del WRAP, el Row no salta de línia, per això necessita l'ScrollView.
-                child: Row(
-                  // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
-                  children: imatges.map((img) {
-                    // Mirem si l'ID d'aquesta imatge està dins de la llista de seleccionats
-                    final isSelected = seleccionats.contains(img.id);
+              // Row: Organitza les miniatures una al costat de l'altra.
+              // A diferència del WRAP, el Row no salta de línia, per això necessita l'ScrollView.
+              child: Row(
+                // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
+                children: imatges.map((img) {
+                  // Mirem si l'ID d'aquesta imatge està dins de la llista de seleccionats
+                  final isSelected = seleccionats.contains(img.id);
 
-                    // GestureDetector (Local): Aquest és específic de cada miniatura.
-                    // És el que tradueix el toc de l'usuari a la lògica (seleccionar)
-                    return GestureDetector(
-                      onTap: () => onAccio(img.id, TipusAccio.seleccionar),
+                  // GestureDetector (Local): Aquest és específic de cada miniatura.
+                  // És el que tradueix el toc de l'usuari a la lògica (seleccionar)
+                  return GestureDetector(
+                    onTap: () => onAccio(img.id, TipusAccio.seleccionar),
 
-                      // Container de cada miniatura, per dibuixar la vora blava si està seleccionada
-                      child: Container(
-                        margin: const EdgeInsets.only(
-                          right: 10,
-                        ), // Espai entre fotos
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: isSelected
-                                ? Colors.blue
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                    // Container de cada miniatura, per dibuixar la vora blava si està seleccionada
+                    child: Container(
+                      margin: const EdgeInsets.only(
+                        right: 10,
+                      ), // Espai entre fotos
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: isSelected ? Colors.blue : Colors.transparent,
+                          width: 2,
                         ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
 
-                        // ClipRRect: "Retalla" les cantonades de la imatge filla perquè no
-                        // sobresurti del contenidor arrodonit. (Molt útil per estètica).
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          // BoxFit.cover: Escala la imatge per omplir el quadrat, retallant el que sobri.
-                          child: Image.file(
-                            File(img.path),
-                            width: 70,
-                            height: 70,
-                            fit: BoxFit.cover,
-                          ),
+                      // ClipRRect: "Retalla" les cantonades de la imatge filla perquè no
+                      // sobresurti del contenidor arrodonit. (Molt útil per estètica).
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        // BoxFit.cover: Escala la imatge per omplir el quadrat, retallant el que sobri.
+                        child: Image.file(
+                          File(img.path),
+                          width: 70,
+                          height: 70,
+                          fit: BoxFit.cover,
                         ),
                       ),
-                    );
-                  }).toList(), // Converteix el resultat del map en una List<Widget>
-                ),
+                    ),
+                  );
+                }).toList(), // Converteix el resultat del map en una List<Widget>
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+      //), //Gesture Detector (global)
     );
   }
 }

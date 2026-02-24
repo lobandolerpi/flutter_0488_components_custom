@@ -18,7 +18,7 @@ class PanellUiState {
     this.alcada = 400.0,
     this.seleccionats = const <int>[], // 1C, ATENCIÓ
     this.llistaImatges = const <ElementImatge>[], // 1C, ATENCIÓ
-    // Les lliste les hem de declarar inmutables a l'arquitectura MVVM reactiva.
+    // Les llista les hem de declarar inmutables a l'arquitectura MVVM reactiva.
     // El metode copyWith hauria de rebre una llista nova const
     // quan la modificquem hem de crear una nova i modificarla.
   });

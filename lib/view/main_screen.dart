@@ -50,7 +50,7 @@ class MainScreen extends StatelessWidget {
 
               // Paràmetres d'estil (Reacció dinàmica a l'estat)
               colorVora: vm.estatPanell.colorVora,
-              alcada: 700,
+              alcada: 500,
               imatges: vm.estatPanell.llistaImatges,
               seleccionats: vm.estatPanell.seleccionats,
 

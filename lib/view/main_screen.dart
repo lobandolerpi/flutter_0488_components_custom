@@ -12,6 +12,22 @@ class MainScreen extends StatelessWidget {
     final vm = context.watch<MainViewModel>();
 
     return Scaffold(
+      // Opció 1
+      /*body: SingleChildScrollView( // <--- Afegeix això
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [*/
+
+      // Opció 2
+      // Aqui hi haurà overflow
+      /*body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [ */
+
       // Aqui hi haurà overflow
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -51,6 +67,7 @@ class MainScreen extends StatelessWidget {
           ],
         ),
       ),
+      //),
     );
   }
 }

@@ -31,8 +31,13 @@ class PanellInteractiuWidget extends StatelessWidget {
   // 3. Callbacks per a la gestió d'esdeveniments (RA 3.4)
   final Function(int, TipusAccio) onAccio; // Callback complex
 
+  // AFEGIM AIXÒ: Un controlador per vincular la barra i la llista
+  final ScrollController _controladorScroll = ScrollController();
+
   // El constructor
-  const PanellInteractiuWidget({
+  // const PanellInteractiuWidget({  // Ho preferim aixì, pero si necessitem el Scroll Controller no és possible
+  // PanellInteractiuWidget({ // Si fem servir ScrollController ha de poder variar.
+  PanellInteractiuWidget({
     super.key, // això és l'identificador únic del giny, fem servir el mètode del pare per crear-lo.
     required this.config, // Es necessari les dades de configuració del widget.
     required this.imatges,
@@ -130,12 +135,53 @@ class PanellInteractiuWidget extends StatelessWidget {
                 1, // El pes dintre de la columne. flex 3 i flex 1, significa 1/4 (25%)
             // SingleChildScrollView: per evitar l'error de "Overflow"
             // Permet que el contingut interior es pugui desplaçar (fer scroll) si no hi cap a la pantalla.
+
+            // Opció 1
+            /*child: SingleChildScrollView(
+               scrollDirection: Axis
+                     .horizontal, // Fem que l'scroll sigui d'esquerra a dreta (tipus Reel)
+               padding: const EdgeInsets.all(8),
+               //  Row: Organitza les miniatures una al costat de l'altra.
+               // A diferència del WRAP, el Row no salta de línia, per això necessita l'ScrollView. 
+               child: Row(
+                // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
+                children: imatges.map((img) { // ... tot igual }
+            */
+
+            // Opció 2: L'opció més responsiva (Graella automàtica)
+            /*child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              // Wrap: Acomoda els elements un al costat de l'altre.
+              // A diferència del Row, quan detecta que no hi caben a la pantalla,
+              // salta a la línia següent automàticament. Evita l'error d'"Overflow".
+              child: Wrap(
+                spacing: 10.0,    // Espai horitzontal entre les fotos
+                runSpacing: 10.0, // Espai vertical quan salta a la línia següent
+                // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
+                children: imatges.map((img) { // ... tot igual }
+            */
+
+            // Opció 3: Llista amb desplaçament natiu (Tipus Carrusel/Reel)
+            /*child: Scrollbar(
+              controller: _controladorScroll,
+              thumbVisibility:
+                  true, // Força a que la barra es vegi sempre (ideal per a PC)
+              // Però entra en conflicte amb
+              child: ListView(
+                scrollDirection: Axis
+                    .horizontal, // Fem que l'scroll sigui d'esquerra a dreta
+                padding: const EdgeInsets.all(8.0),
+                // ListView: Giny optimitzat per a llistes.
+                // A diferència de l'Opció 1, ja porta l'scroll incorporat de sèrie,
+                // per tant no necessita cap SingleChildScrollView pare.
+                // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
+                children: imatges.map((img) { // ... tot igual }
+            */
             child: SingleChildScrollView(
               scrollDirection: Axis
                   .horizontal, // Fem que l'scroll sigui d'esquerra a dreta (tipus Reel)
               padding: const EdgeInsets.all(8),
-
-              // Row: Organitza les miniatures una al costat de l'altra.
+              //  Row: Organitza les miniatures una al costat de l'altra.
               // A diferència del WRAP, el Row no salta de línia, per això necessita l'ScrollView.
               child: Row(
                 // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).

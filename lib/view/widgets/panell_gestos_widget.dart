@@ -177,13 +177,15 @@ class PanellInteractiuWidget extends StatelessWidget {
                 // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
                 children: imatges.map((img) { // ... tot igual }
             */
-            child: SingleChildScrollView(
-              scrollDirection: Axis
-                  .horizontal, // Fem que l'scroll sigui d'esquerra a dreta (tipus Reel)
-              padding: const EdgeInsets.all(8),
-              //  Row: Organitza les miniatures una al costat de l'altra.
-              // A diferència del WRAP, el Row no salta de línia, per això necessita l'ScrollView.
-              child: Row(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              // Wrap: Acomoda els elements un al costat de l'altre.
+              // A diferència del Row, quan detecta que no hi caben a la pantalla,
+              // salta a la línia següent automàticament. Evita l'error d'"Overflow".
+              child: Wrap(
+                spacing: 10.0, // Espai horitzontal entre les fotos
+                runSpacing:
+                    10.0, // Espai vertical quan salta a la línia següent
                 // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
                 children: imatges.map((img) {
                   // Mirem si l'ID d'aquesta imatge està dins de la llista de seleccionats

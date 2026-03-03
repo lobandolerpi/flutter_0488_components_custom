@@ -9,6 +9,7 @@ class PanellUiState {
   final double alcada; // Estat de la posició (Coordenada Y)
   final List<int> seleccionats;
   final List<ElementImatge> llistaImatges;
+  final int? imatgeMostradaId;
 
   const PanellUiState({
     this.missatgeGest = "Esperant interacció...",
@@ -21,6 +22,7 @@ class PanellUiState {
     // Les llista les hem de declarar inmutables a l'arquitectura MVVM reactiva.
     // El metode copyWith hauria de rebre una llista nova const
     // quan la modificquem hem de crear una nova i modificarla.
+    this.imatgeMostradaId,
   });
 
   // Mètode clau (copyWith): Permet crear una còpia de l'estat actual
@@ -33,6 +35,7 @@ class PanellUiState {
     double? alcada,
     List<int>? seleccionats,
     List<ElementImatge>? llistaImatges,
+    int? imatgeMostradaId,
   }) {
     return PanellUiState(
       missatgeGest: missatgeGest ?? this.missatgeGest,
@@ -44,6 +47,7 @@ class PanellUiState {
           seleccionats ?? this.seleccionats, // ULL AMB AIXÔ JA EN PARLAREM
       llistaImatges:
           llistaImatges ?? this.llistaImatges, // ULL AMB AIXÔ JA EN PARLAREM
+      imatgeMostradaId: imatgeMostradaId ?? this.imatgeMostradaId,
     );
   }
 }

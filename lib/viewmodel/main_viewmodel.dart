@@ -85,19 +85,51 @@ class MainViewModel extends ChangeNotifier {
     }
   }
 
-  void gestionarSeleccio(int id, TipusAccio accio) {
+  void gestionarSeleccio(
+    int id,
+    TipusAccio accio, {
+    bool multiSelect = false, //S1D, paràmetre opcional per selecció múltiple
+  }) {
     if (accio == TipusAccio.seleccionar) {
       // Creem una COPIA de la llista (per referència)
-      final novaLlista = List<int>.from(_estatPanell.seleccionats);
+      List<int> novaLlista = List<int>.from(_estatPanell.seleccionats);
 
-      if (novaLlista.contains(id)) {
-        novaLlista.remove(id);
+      if (multiSelect) {
+        // S1D lògica selecció múltiple (d'un en un)
+        if (novaLlista.contains(id)) {
+          novaLlista.remove(id);
+        } else {
+          novaLlista.add(id);
+        }
       } else {
-        novaLlista.add(id);
+        // S1D lògica selecció única
+        novaLlista = [id];
       }
 
       _estatPanell = _estatPanell.copyWith(seleccionats: novaLlista);
       notifyListeners();
     }
+  }
+
+  //  S1D. Nou mètode per esborrar (RA 4.2)
+  void eliminarSeleccionats() {
+    if (_estatPanell.seleccionats.isEmpty)
+      return; // Si no tinc selecció, no he de fer res
+
+    // Filtrem la llista d'imatges: només es queden les que NO estan a la llista de seleccionats
+    final novaLlistaImatges = _estatPanell
+        .llistaImatges // nova variable dinal des d'una llista.
+        .where(
+          (img) => !_estatPanell.seleccionats.contains(img.id),
+        ) // selecciono on img.id no està a seleccionats.
+        .toList(); // ho transformo en una llista per la variable de sortida.
+
+    _estatPanell = _estatPanell.copyWith(
+      llistaImatges: novaLlistaImatges,
+      seleccionats: const [], // Netegem la selecció després d'esborrar
+      missatgeGest: "S'han eliminat els elements seleccionats",
+    );
+
+    notifyListeners();
   }
 }

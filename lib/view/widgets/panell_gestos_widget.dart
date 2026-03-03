@@ -1,7 +1,27 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_0488_components_custom/model/galery_data.dart';
+
+//  S1D Això es un Shortcut, Intent és semblant a GestureDetectors però per accions de teclat.
+// flutter recomana Intents a tecles específiques. El mateix intent es pot disparar amb Del o Supr
+class DeleteIntent extends Intent {
+  const DeleteIntent();
+}
+
+class DeleteAction extends Action<DeleteIntent> {
+  // El callback que volem executar (la funció del ViewModel)
+  final VoidCallback onInvokeAction;
+
+  DeleteAction(this.onInvokeAction);
+
+  @override
+  void invoke(DeleteIntent intent) {
+    // Aquí s'executa la lògica quan es detecta l'intent
+    onInvokeAction();
+  }
+}
 
 /// Model d'estat per a la configuració visual del panell (RA 3.3)
 class PanellConfig {
@@ -29,7 +49,9 @@ class PanellInteractiuWidget extends StatelessWidget {
   final List<int> seleccionats; // Estat de selecció
 
   // 3. Callbacks per a la gestió d'esdeveniments (RA 3.4)
-  final Function(int, TipusAccio) onAccio; // Callback complex
+  final Function(int, TipusAccio, {bool multiSelect})
+  onAccio; // Callback complex
+  final VoidCallback onEsborrar; // S1D Nou callback
 
   // AFEGIM AIXÒ: Un controlador per vincular la barra i la llista
   final ScrollController _controladorScroll = ScrollController();
@@ -43,13 +65,13 @@ class PanellInteractiuWidget extends StatelessWidget {
     required this.imatges,
     required this.seleccionats,
     required this.onAccio,
+    required this.onEsborrar, // S1D nou callback
     this.colorVora = Colors.transparent, // Valor per defecte
     this.alcada = 200.0, // Valor per defecte
   });
 
   @override
   Widget build(BuildContext context) {
-    // Darrera imatge seleccionada per veure-la gran:
     final ElementImatge? imatgeGran =
         seleccionats
             .isNotEmpty // terna
@@ -60,84 +82,106 @@ class PanellInteractiuWidget extends StatelessWidget {
               ? imatges.first
               : null); // si seleccionat es buit, un altre tera, ara la primera de la llista o nul.
 
-    // AnimatedContainer, per poder fer "animacions" transicions suaus.
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      height: alcada,
-      decoration: BoxDecoration(
-        // BoxDecoration ens permet modificat la caixa exterior del giny (cantonades, vores, etc.)
-        color: config.colorFons,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: colorVora, width: 3),
-      ),
-      // RECUPEREM EL GESTURE DETECTOR GLOBAL (Sessió 1B)
-      // L'emboliquem aquí perquè detecti qualsevol interacció dins del panell.
-      // Encara que avui no l'usem, el necessitarem a la Sessió 1D per detectar
-      // el "Swipe" (lliscament) per passar la foto gran cap a la dreta o esquerra.
-
-      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-      // @@    child: GestureDetector(          @@
-      // @@  Atenció: Arena dels gestos, explicar  @@
-      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-      // Per poder detectar els gestos. De moment no ho farem
-      // TODO
-      // onHorizontalDragEnd: (details) => funcioPerPassarFoto(),
-      // onTapDown: (details) => funcioPerDetectarClicLliure(),
-
-      // Column: Per apilar widgets => zones una sobre l'altre..
-      child: Column(
-        children: [
-          Expanded(
-            // Expanded: "Ocupa tot l'espai que sobri de la columna".
-            flex:
-                3, // El pes dintre de la columna. flex 3 i flex 1, significa 3/4 (75%)
-            child: GestureDetector(
-              // GestureDetector (Local): Aquest és específic de la imatge gran
-              // =========================================================
-              // ZONA 1: EL VISOR (Imatge gran)
-              // =========================================================
-              // Amb el flex: 3, li estem dient que aquesta zona ocuparà
-              // 3 quartes parts (75%) de l'alçada total disponible.
-              child: Container(
-                // Container intern per donar marge i un fons fosc a la foto gran
-                width: double.infinity, // Ocupa tota l'amplada possible
-                margin: const EdgeInsets.all(
-                  // Espai exterior (aire al voltant)
-                  8,
-                ),
-                decoration: BoxDecoration(
-                  color:
-                      Colors.black12, // Fons lleugerament gris per contrastar
-                  borderRadius: BorderRadius.circular(10),
-                ),
-
-                // Si tenim una foto per mostrar, la pintem. Si no, mostrem un text.
-                child: imatgeGran != null
-                    // Image.file: Llegeix un fitxer físic del disc dur.
-                    // BoxFit.contain: Escala la imatge perquè càpiga sencera sense deformar-se.
-                    ? Image.file(File(imatgeGran.path), fit: BoxFit.contain)
-                    : const Center(
-                        // Center: Centra el text "Carpeta buida..." vertical i horitzontalment.
-                        child: Text("Carpeta buida o sense selecció"),
-                      ),
-              ),
+    // S1D El Widget ara té MOOOOLTES CAPES NIUADES.
+    // flutter diu que primer TECLAT i La jerarquia de Teclat (Shortcuts -> Actions -> Focus)
+    return Shortcuts(
+      // 1. EL DICCIONARI (Mapping Tecla -> Intenció)
+      shortcuts: <ShortcutActivator, Intent>{
+        LogicalKeySet(
+          LogicalKeyboardKey.delete,
+        ): const DeleteIntent(), // si ens cliquen delete, el nostre Intent serà DeleteIntent (que l'hen definit.)
+      },
+      child: Actions(
+        // 2. EL DICCIONARI D'ACCIONS (Mapping Intenció -> Classe d'Acció)
+        actions: <Type, Action<Intent>>{
+          DeleteIntent: DeleteAction(
+            onEsborrar,
+          ), // Si la intenció és esborrar l'Acció d'esborrar amb el callback del que cal d'esborrar
+        },
+        // 3a CAPA: Focus (El listener que escolta el teclat)
+        child: Focus(
+          autofocus: true, // forcem que estigui actiu sempre
+          child: AnimatedContainer(
+            // A partir d'aquí exactament com era a S1C (si hi ha canvis, s'expliciten)
+            duration: const Duration(milliseconds: 300),
+            height: alcada,
+            decoration: BoxDecoration(
+              // BoxDecoration ens permet modificat la caixa exterior del giny (cantonades, vores, etc.)
+              color: config.colorFons,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: colorVora, width: 3),
             ),
-          ),
+            // RECUPEREM EL GESTURE DETECTOR GLOBAL (Sessió 1B)
+            // L'emboliquem aquí perquè detecti qualsevol interacció dins del panell.
+            // Encara que avui no l'usem, el necessitarem a la Sessió 1D per detectar
+            // el "Swipe" (lliscament) per passar la foto gran cap a la dreta o esquerra.
 
-          // Divider: Dibuixa una línia horitzontal fina per separar les dues zones.
-          const Divider(height: 1),
+            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            // @@    child: GestureDetector(          @@
+            // @@  Atenció: Arena dels gestos, explicar  @@
+            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            // Per poder detectar els gestos. De moment no ho farem
+            // TODO
+            // onHorizontalDragEnd: (details) => funcioPerPassarFoto(),
+            // onTapDown: (details) => funcioPerDetectarClicLliure(),
 
-          // =========================================================
-          // ZONA 2: LA GALERIA (Miniatures inferiors)
-          // =========================================================
-          Expanded(
-            flex:
-                1, // El pes dintre de la columne. flex 3 i flex 1, significa 1/4 (25%)
-            // SingleChildScrollView: per evitar l'error de "Overflow"
-            // Permet que el contingut interior es pugui desplaçar (fer scroll) si no hi cap a la pantalla.
+            // Column: Per apilar widgets => zones una sobre l'altre..
+            child: Column(
+              children: [
+                Expanded(
+                  // Expanded: "Ocupa tot l'espai que sobri de la columna".
+                  flex:
+                      3, // El pes dintre de la columna. flex 3 i flex 1, significa 3/4 (75%)
+                  child: GestureDetector(
+                    // GestureDetector (Local): Aquest és específic de la imatge gran
+                    // =========================================================
+                    // ZONA 1: EL VISOR (Imatge gran)
+                    // =========================================================
+                    // Amb el flex: 3, li estem dient que aquesta zona ocuparà
+                    // 3 quartes parts (75%) de l'alçada total disponible.
+                    child: Container(
+                      // Container intern per donar marge i un fons fosc a la foto gran
+                      width: double.infinity, // Ocupa tota l'amplada possible
+                      margin: const EdgeInsets.all(
+                        // Espai exterior (aire al voltant)
+                        8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors
+                            .black12, // Fons lleugerament gris per contrastar
+                        borderRadius: BorderRadius.circular(10),
+                      ),
 
-            // Opció 1
-            /*child: SingleChildScrollView(
+                      // Si tenim una foto per mostrar, la pintem. Si no, mostrem un text.
+                      child: imatgeGran != null
+                          // Image.file: Llegeix un fitxer físic del disc dur.
+                          // BoxFit.contain: Escala la imatge perquè càpiga sencera sense deformar-se.
+                          ? Image.file(
+                              File(imatgeGran.path),
+                              fit: BoxFit.contain,
+                            )
+                          : const Center(
+                              // Center: Centra el text "Carpeta buida..." vertical i horitzontalment.
+                              child: Text("Carpeta buida o sense selecció"),
+                            ),
+                    ),
+                  ),
+                ),
+
+                // Divider: Dibuixa una línia horitzontal fina per separar les dues zones.
+                const Divider(height: 1),
+
+                // =========================================================
+                // ZONA 2: LA GALERIA (Miniatures inferiors)
+                // =========================================================
+                Expanded(
+                  flex:
+                      1, // El pes dintre de la columne. flex 3 i flex 1, significa 1/4 (25%)
+                  // SingleChildScrollView: per evitar l'error de "Overflow"
+                  // Permet que el contingut interior es pugui desplaçar (fer scroll) si no hi cap a la pantalla.
+
+                  // Opció 1
+                  /*child: SingleChildScrollView(
                scrollDirection: Axis
                      .horizontal, // Fem que l'scroll sigui d'esquerra a dreta (tipus Reel)
                padding: const EdgeInsets.all(8),
@@ -148,8 +192,8 @@ class PanellInteractiuWidget extends StatelessWidget {
                 children: imatges.map((img) { // ... tot igual }
             */
 
-            // Opció 2: L'opció més responsiva (Graella automàtica)
-            /*child: Padding(
+                  // Opció 2: L'opció més responsiva (Graella automàtica)
+                  /*child: Padding(
               padding: const EdgeInsets.all(8.0),
               // Wrap: Acomoda els elements un al costat de l'altre.
               // A diferència del Row, quan detecta que no hi caben a la pantalla,
@@ -161,8 +205,8 @@ class PanellInteractiuWidget extends StatelessWidget {
                 children: imatges.map((img) { // ... tot igual }
             */
 
-            // Opció 3: Llista amb desplaçament natiu (Tipus Carrusel/Reel)
-            /*child: Scrollbar(
+                  // Opció 3: Llista amb desplaçament natiu (Tipus Carrusel/Reel)
+                  /*child: Scrollbar(
               controller: _controladorScroll,
               thumbVisibility:
                   true, // Força a que la barra es vegi sempre (ideal per a PC)
@@ -177,59 +221,73 @@ class PanellInteractiuWidget extends StatelessWidget {
                 // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
                 children: imatges.map((img) { // ... tot igual }
             */
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              // Wrap: Acomoda els elements un al costat de l'altre.
-              // A diferència del Row, quan detecta que no hi caben a la pantalla,
-              // salta a la línia següent automàticament. Evita l'error d'"Overflow".
-              child: Wrap(
-                spacing: 10.0, // Espai horitzontal entre les fotos
-                runSpacing:
-                    10.0, // Espai vertical quan salta a la línia següent
-                // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
-                children: imatges.map((img) {
-                  // Mirem si l'ID d'aquesta imatge està dins de la llista de seleccionats
-                  final isSelected = seleccionats.contains(img.id);
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    // Wrap: Acomoda els elements un al costat de l'altre.
+                    // A diferència del Row, quan detecta que no hi caben a la pantalla,
+                    // salta a la línia següent automàticament. Evita l'error d'"Overflow".
+                    child: Wrap(
+                      spacing: 10.0, // Espai horitzontal entre les fotos
+                      runSpacing:
+                          10.0, // Espai vertical quan salta a la línia següent
+                      // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
+                      children: imatges.map((img) {
+                        // Mirem si l'ID d'aquesta imatge està dins de la llista de seleccionats
+                        final isSelected = seleccionats.contains(img.id);
 
-                  // GestureDetector (Local): Aquest és específic de cada miniatura.
-                  // És el que tradueix el toc de l'usuari a la lògica (seleccionar)
-                  return GestureDetector(
-                    onTap: () => onAccio(img.id, TipusAccio.seleccionar),
+                        // GestureDetector (Local): Aquest és específic de cada miniatura.
+                        // És el que tradueix el toc de l'usuari a la lògica (seleccionar)
+                        return GestureDetector(
+                          onTap: () {
+                            // RA 4.2: Interacció complexa (Clic + Teclat)
+                            final isShiftPressed =
+                                HardwareKeyboard.instance.isShiftPressed;
+                            onAccio(
+                              img.id,
+                              TipusAccio.seleccionar,
+                              multiSelect: isShiftPressed,
+                            );
+                          },
 
-                    // Container de cada miniatura, per dibuixar la vora blava si està seleccionada
-                    child: Container(
-                      margin: const EdgeInsets.only(
-                        right: 10,
-                      ), // Espai entre fotos
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: isSelected ? Colors.blue : Colors.transparent,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                          // Container de cada miniatura, per dibuixar la vora blava si està seleccionada
+                          child: Container(
+                            margin: const EdgeInsets.only(
+                              right: 10,
+                            ), // Espai entre fotos
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.blue
+                                    : Colors.transparent,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
 
-                      // ClipRRect: "Retalla" les cantonades de la imatge filla perquè no
-                      // sobresurti del contenidor arrodonit. (Molt útil per estètica).
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        // BoxFit.cover: Escala la imatge per omplir el quadrat, retallant el que sobri.
-                        child: Image.file(
-                          File(img.path),
-                          width: 70,
-                          height: 70,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                            // ClipRRect: "Retalla" les cantonades de la imatge filla perquè no
+                            // sobresurti del contenidor arrodonit. (Molt útil per estètica).
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              // BoxFit.cover: Escala la imatge per omplir el quadrat, retallant el que sobri.
+                              child: Image.file(
+                                File(img.path),
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(), // Converteix el resultat del map en una List<Widget>
                     ),
-                  );
-                }).toList(), // Converteix el resultat del map en una List<Widget>
-              ),
+                  ),
+                ),
+              ],
             ),
+            //), //Gesture Detector (global)
           ),
-        ],
+        ),
       ),
-      //), //Gesture Detector (global)
     );
   }
 }

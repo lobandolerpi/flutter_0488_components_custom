@@ -55,7 +55,9 @@ class MainScreen extends StatelessWidget {
               seleccionats: vm.estatPanell.seleccionats,
 
               // --- GESTIÓ D'ESDEVENIMENTS (Callbacks cap al ViewModel) ---
-              onAccio: (id, accio) => vm.gestionarSeleccio(id, accio),
+              onAccio: (id, accio, {multiSelect = false}) =>
+                  vm.gestionarSeleccio(id, accio, multiSelect: multiSelect),
+              onEsborrar: () => vm.eliminarSeleccionats(),
             ),
 
             // Afegiu un botó a sota per disparar la lectura inicial:

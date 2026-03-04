@@ -6,23 +6,50 @@ import 'package:flutter_0488_components_custom/model/galery_data.dart';
 
 // Mètode d'ajuda per crear la miniatura,
 // Així no he de picar tot això al Component, i queda més net
-Widget _buildMiniatura(ElementImatge img, bool isSelected) {
-  return Container(
-    margin: const EdgeInsets.all(4),
-    decoration: BoxDecoration(
-      border: Border.all(
-        color: isSelected ? Colors.blue : Colors.transparent,
-        width: 2,
+Widget _buildMiniatura(
+  ElementImatge img,
+  bool isSelected, {
+  bool isHovering = false,
+}) {
+  // RESPONSE 1: MouseRegion per gestionar el cursor
+  return MouseRegion(
+    cursor: isHovering ? SystemMouseCursors.grab : SystemMouseCursors.click,
+
+    // OPCIÓ 2: AnimatedContainer per a la microinteracció visual
+    child: AnimatedContainer(
+      // Animació implícita: Flutter calcula la transició automàticament
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+
+      // Juguem amb el marge per fer l'efecte d'elevació
+      margin: EdgeInsets.all(isHovering ? 0 : 4),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: isSelected ? Colors.blue : Colors.transparent,
+          width: 2,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        // Afegim una ombra dinàmica
+        boxShadow: isHovering
+            ? [
+                BoxShadow(
+                  //color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4), // Ombra cap avall
+                ),
+              ]
+            : [], // Sense ombra si no hi ha hover
       ),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: Image.file(
-        File(img.path),
-        width: 70,
-        height: 70,
-        fit: BoxFit.cover,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          // La imatge es fa lleugerament més gran
+          width: isHovering ? 78 : 70,
+          height: isHovering ? 78 : 70,
+          child: Image.file(File(img.path), fit: BoxFit.cover),
+        ),
       ),
     ),
   );
@@ -177,52 +204,64 @@ class PanellInteractiuWidget extends StatelessWidget {
                         onSwipe(1);
                       }
                     },
-                    child: DragTarget<int>(
-                      onAcceptWithDetails: (details) {
-                        // 'details.data' conté l'ID (int) de la miniatura que hem arrossegat.
-                        // 'details.offset' et donaria les coordenades x,y d'on s'ha deixat anar (opcional, per si ho vols comentar als alumnes).
 
+                    child: DragTarget<int>(
+                      // 'details.data' conté l'ID (int) de la miniatura que hem arrossegat.
+                      // 'details.offset' et donaria les coordenades x,y d'on s'ha deixat anar (opcional, per si ho vols comentar als alumnes).
+                      onAcceptWithDetails: (details) {
                         // Quan deixem anar la miniatura a sobre
                         onImageDropped(details.data);
                       },
-
                       builder: (context, candidateData, rejectedData) {
                         // Si candidateData.isNotEmpty vol dir que tenim un drag a sobre!
                         // candidateData és gestionat internament pel DragTarget. Cap StatefulWidget necessari!
-                        final isHovered = candidateData.isNotEmpty;
+                        final isDragHovered = candidateData.isNotEmpty;
 
-                        return
-                        // =========================================================
-                        // ZONA 1: EL VISOR (Imatge gran)
-                        // =========================================================
-                        // Amb el flex: 3, li estem dient que aquesta zona ocuparà
-                        // 3 quartes parts (75%) de l'alçada total disponible.
-                        Container(
-                          // Container intern per donar marge i un fons fosc a la foto gran
-                          width:
-                              double.infinity, // Ocupa tota l'amplada possible
-                          margin: const EdgeInsets.all(
-                            // Espai exterior (aire al voltant)
-                            8,
-                          ),
+                        return AnimatedContainer(
+                          // =========================================================
+                          // ZONA 1: EL VISOR (Imatge gran)
+                          // =========================================================
+                          // Amb el flex: 3, li estem dient que aquesta zona ocuparà
+                          // 3 quartes parts (75%) de l'alçada total disponible.
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          // Canviem l'aspecte del contenidor de la imatge gran quan hi ha un drop a sobre
                           decoration: BoxDecoration(
-                            color: Colors
-                                .black12, // Fons lleugerament gris per contrastar
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              // Si hi tenim la imatge a sobre, la vora es posa verda i més gruixuda
+                              color: isDragHovered
+                                  ? Colors.greenAccent
+                                  : colorVora,
+                              width: isDragHovered ? 4.0 : 2.0,
+                            ),
+                            boxShadow: isDragHovered
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.greenAccent.withValues(
+                                        alpha: .4,
+                                      ),
+                                      blurRadius: 15,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : [],
                           ),
-
-                          // Si tenim una foto per mostrar, la pintem. Si no, mostrem un text.
-                          child: imatgeGran != null
-                              // Image.file: Llegeix un fitxer físic del disc dur.
-                              // BoxFit.contain: Escala la imatge perquè càpiga sencera sense deformar-se.
-                              ? Image.file(
-                                  File(imatgeGran.path),
-                                  fit: BoxFit.contain,
-                                )
-                              : const Center(
-                                  // Center: Centra el text "Carpeta buida..." vertical i horitzontalment.
-                                  child: Text("Carpeta buida o sense selecció"),
-                                ),
+                          // Per fer-ho encara més evident, podem posar un filtre de color a la imatge gran
+                          child: ColorFiltered(
+                            colorFilter: ColorFilter.mode(
+                              isDragHovered
+                                  ? Colors.white.withValues(alpha: 0.3)
+                                  : Colors.transparent,
+                              BlendMode.lighten,
+                            ),
+                            child: imatgeGran != null
+                                ? Image.file(
+                                    File(imatgeGran.path),
+                                    fit: BoxFit.cover,
+                                  )
+                                : const Center(child: Text("Cap imatge")),
+                          ),
                         );
                       },
                     ),

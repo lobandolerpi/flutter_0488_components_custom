@@ -54,10 +54,16 @@ class MainScreen extends StatelessWidget {
               imatges: vm.estatPanell.llistaImatges,
               seleccionats: vm.estatPanell.seleccionats,
 
+              imatgeMostradaId: vm.estatPanell.imatgeMostradaId,
+
               // --- GESTIÓ D'ESDEVENIMENTS (Callbacks cap al ViewModel) ---
               onAccio: (id, accio, {multiSelect = false}) =>
                   vm.gestionarSeleccio(id, accio, multiSelect: multiSelect),
               onEsborrar: () => vm.eliminarSeleccionats(),
+              onImageDropped: (id) => vm.canviarImatgeMostrada(id),
+              onSwipe: (direccio) => vm.navegarImatge(direccio),
+
+              // // // ALERTA // COMPROVAR
             ),
 
             // Afegiu un botó a sota per disparar la lectura inicial:

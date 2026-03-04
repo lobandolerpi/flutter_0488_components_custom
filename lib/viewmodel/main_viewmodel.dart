@@ -14,6 +14,33 @@ class MainViewModel extends ChangeNotifier {
   // creem les instancies d'estat al main.
   MainViewModel(this._estatPanell);
 
+  // Mètode per canviar la imatge pel Drag & Drop
+  void canviarImatgeMostrada(int id) {
+    _estatPanell = _estatPanell.copyWith(imatgeMostradaId: id);
+    notifyListeners();
+  }
+
+  // Mètode pel Swipe (Dreta / Esquerra) amb int direcció +1/-1
+  void navegarImatge(int direccio) {
+    if (_estatPanell.llistaImatges.isEmpty) return;
+    // Si no hi ha imatge mostrada, la primera de la llista
+    int idActual =
+        _estatPanell.imatgeMostradaId ?? _estatPanell.llistaImatges.first.id;
+    // index amb el metode indexWhere de la llista.
+    int indexActual = _estatPanell.llistaImatges.indexWhere(
+      (img) => img.id == idActual,
+    );
+    // si no existeix tornarà -1 i cal tornar sense fer res
+    if (indexActual == -1) return;
+
+    int nouIndex = indexActual + direccio;
+
+    // Limitem perquè no peti si arribem als extrems
+    if (nouIndex >= 0 && nouIndex < _estatPanell.llistaImatges.length) {
+      canviarImatgeMostrada(_estatPanell.llistaImatges[nouIndex].id);
+    }
+  }
+
   // MÈTODES PER CANVIAR DADES DE L'ESTAT.
   void actualitzarMissatge(String nouMissatge) {
     // Creem un nou estat copiant l'anterior i canviant només el missatge

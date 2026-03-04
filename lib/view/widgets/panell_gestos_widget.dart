@@ -4,6 +4,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_0488_components_custom/model/galery_data.dart';
 
+// Mètode d'ajuda per crear la miniatura,
+// Així no he de picar tot això al Component, i queda més net
+Widget _buildMiniatura(ElementImatge img, bool isSelected) {
+  return Container(
+    margin: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      border: Border.all(
+        color: isSelected ? Colors.blue : Colors.transparent,
+        width: 2,
+      ),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: Image.file(
+        File(img.path),
+        width: 70,
+        height: 70,
+        fit: BoxFit.cover,
+      ),
+    ),
+  );
+}
+
 //  S1D Això es un Shortcut, Intent és semblant a GestureDetectors però per accions de teclat.
 // flutter recomana Intents a tecles específiques. El mateix intent es pot disparar amb Del o Supr
 class DeleteIntent extends Intent {
@@ -48,39 +72,47 @@ class PanellInteractiuWidget extends StatelessWidget {
   final List<ElementImatge> imatges; // Dada de negoci
   final List<int> seleccionats; // Estat de selecció
 
+  final int? imatgeMostradaId;
+
   // 3. Callbacks per a la gestió d'esdeveniments (RA 3.4)
-  final Function(int, TipusAccio, {bool multiSelect})
+  final void Function(int, TipusAccio, {bool multiSelect})
   onAccio; // Callback complex
   final VoidCallback onEsborrar; // S1D Nou callback
+  final Function(int) onImageDropped;
+  final Function(int) onSwipe; // Enviarem -1 (previ) o 1 (següent)
 
   // AFEGIM AIXÒ: Un controlador per vincular la barra i la llista
-  final ScrollController _controladorScroll = ScrollController();
+  // final ScrollController _controladorScroll = ScrollController();
 
   // El constructor
   // const PanellInteractiuWidget({  // Ho preferim aixì, pero si necessitem el Scroll Controller no és possible
   // PanellInteractiuWidget({ // Si fem servir ScrollController ha de poder variar.
-  PanellInteractiuWidget({
+  const PanellInteractiuWidget({
     super.key, // això és l'identificador únic del giny, fem servir el mètode del pare per crear-lo.
     required this.config, // Es necessari les dades de configuració del widget.
     required this.imatges,
     required this.seleccionats,
+    required this.imatgeMostradaId,
     required this.onAccio,
     required this.onEsborrar, // S1D nou callback
+    required this.onImageDropped,
+    required this.onSwipe,
     this.colorVora = Colors.transparent, // Valor per defecte
     this.alcada = 200.0, // Valor per defecte
   });
 
   @override
   Widget build(BuildContext context) {
-    final ElementImatge? imatgeGran =
-        seleccionats
-            .isNotEmpty // terna
+    // Determinar imatge gran basada EXCLUSIVAMENT en imatgeMostradaId
+    final ElementImatge? imatgeGran = imatgeMostradaId != null
         ? imatges.firstWhere(
-            (imgParametreLambda) => imgParametreLambda.id == seleccionats.last,
-          ) // si no es buit Lamba que torna la imatge amb el criteri LAST
-        : (imatges.isNotEmpty
-              ? imatges.first
-              : null); // si seleccionat es buit, un altre tera, ara la primera de la llista o nul.
+            (img) => img.id == imatgeMostradaId,
+            // Fallback per si l'ID esborrat era el mostrat
+            orElse: () => imatges.isNotEmpty
+                ? imatges.first
+                : throw Exception('Llista buida'),
+          )
+        : (imatges.isNotEmpty ? imatges.first : null);
 
     // S1D El Widget ara té MOOOOLTES CAPES NIUADES.
     // flutter diu que primer TECLAT i La jerarquia de Teclat (Shortcuts -> Actions -> Focus)
@@ -134,36 +166,65 @@ class PanellInteractiuWidget extends StatelessWidget {
                       3, // El pes dintre de la columna. flex 3 i flex 1, significa 3/4 (75%)
                   child: GestureDetector(
                     // GestureDetector (Local): Aquest és específic de la imatge gran
-                    // =========================================================
-                    // ZONA 1: EL VISOR (Imatge gran)
-                    // =========================================================
-                    // Amb el flex: 3, li estem dient que aquesta zona ocuparà
-                    // 3 quartes parts (75%) de l'alçada total disponible.
-                    child: Container(
-                      // Container intern per donar marge i un fons fosc a la foto gran
-                      width: double.infinity, // Ocupa tota l'amplada possible
-                      margin: const EdgeInsets.all(
-                        // Espai exterior (aire al voltant)
-                        8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors
-                            .black12, // Fons lleugerament gris per contrastar
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                    onHorizontalDragEnd: (details) {
+                      // Lambda on puc emprar els detalls del Drag per decidir esquerra o dreta
+                      // Detectem la direcció del swipe a partir de la velocitat (primaryVelocity)
+                      if (details.primaryVelocity! > 0) {
+                        // Arrossega cap a la dreta -> Imatge prèvia
+                        onSwipe(-1);
+                      } else if (details.primaryVelocity! < 0) {
+                        // Arrossega cap a l'esquerra -> Imatge següent
+                        onSwipe(1);
+                      }
+                    },
+                    child: DragTarget<int>(
+                      onAcceptWithDetails: (details) {
+                        // 'details.data' conté l'ID (int) de la miniatura que hem arrossegat.
+                        // 'details.offset' et donaria les coordenades x,y d'on s'ha deixat anar (opcional, per si ho vols comentar als alumnes).
 
-                      // Si tenim una foto per mostrar, la pintem. Si no, mostrem un text.
-                      child: imatgeGran != null
-                          // Image.file: Llegeix un fitxer físic del disc dur.
-                          // BoxFit.contain: Escala la imatge perquè càpiga sencera sense deformar-se.
-                          ? Image.file(
-                              File(imatgeGran.path),
-                              fit: BoxFit.contain,
-                            )
-                          : const Center(
-                              // Center: Centra el text "Carpeta buida..." vertical i horitzontalment.
-                              child: Text("Carpeta buida o sense selecció"),
-                            ),
+                        // Quan deixem anar la miniatura a sobre
+                        onImageDropped(details.data);
+                      },
+
+                      builder: (context, candidateData, rejectedData) {
+                        // Si candidateData.isNotEmpty vol dir que tenim un drag a sobre!
+                        // candidateData és gestionat internament pel DragTarget. Cap StatefulWidget necessari!
+                        final isHovered = candidateData.isNotEmpty;
+
+                        return
+                        // =========================================================
+                        // ZONA 1: EL VISOR (Imatge gran)
+                        // =========================================================
+                        // Amb el flex: 3, li estem dient que aquesta zona ocuparà
+                        // 3 quartes parts (75%) de l'alçada total disponible.
+                        Container(
+                          // Container intern per donar marge i un fons fosc a la foto gran
+                          width:
+                              double.infinity, // Ocupa tota l'amplada possible
+                          margin: const EdgeInsets.all(
+                            // Espai exterior (aire al voltant)
+                            8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors
+                                .black12, // Fons lleugerament gris per contrastar
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+
+                          // Si tenim una foto per mostrar, la pintem. Si no, mostrem un text.
+                          child: imatgeGran != null
+                              // Image.file: Llegeix un fitxer físic del disc dur.
+                              // BoxFit.contain: Escala la imatge perquè càpiga sencera sense deformar-se.
+                              ? Image.file(
+                                  File(imatgeGran.path),
+                                  fit: BoxFit.contain,
+                                )
+                              : const Center(
+                                  // Center: Centra el text "Carpeta buida..." vertical i horitzontalment.
+                                  child: Text("Carpeta buida o sense selecció"),
+                                ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -237,45 +298,45 @@ class PanellInteractiuWidget extends StatelessWidget {
 
                         // GestureDetector (Local): Aquest és específic de cada miniatura.
                         // És el que tradueix el toc de l'usuari a la lògica (seleccionar)
-                        return GestureDetector(
-                          onTap: () {
-                            // RA 4.2: Interacció complexa (Clic + Teclat)
-                            final isShiftPressed =
-                                HardwareKeyboard.instance.isShiftPressed;
-                            onAccio(
-                              img.id,
-                              TipusAccio.seleccionar,
-                              multiSelect: isShiftPressed,
-                            );
-                          },
-
-                          // Container de cada miniatura, per dibuixar la vora blava si està seleccionada
-                          child: Container(
-                            margin: const EdgeInsets.only(
-                              right: 10,
-                            ), // Espai entre fotos
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: isSelected
-                                    ? Colors.blue
-                                    : Colors.transparent,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
+                        return Draggable<int>(
+                          data: img
+                              .id, // La dada que canvia i s'introdueix a la llista del Draggable.
+                          // 1. Com es veu la miniatura mentre vola (Drag)
+                          feedback: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.file(
+                              File(img.path),
+                              width: 70,
+                              height: 70,
+                              fit: BoxFit.cover,
                             ),
+                          ),
 
-                            // ClipRRect: "Retalla" les cantonades de la imatge filla perquè no
-                            // sobresurti del contenidor arrodonit. (Molt útil per estètica).
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              // BoxFit.cover: Escala la imatge per omplir el quadrat, retallant el que sobri.
-                              child: Image.file(
-                                File(img.path),
-                                width: 70,
-                                height: 70,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                          // 2. Com es veu el forat que deixa al Wrap
+                          childWhenDragging: Opacity(
+                            opacity: 0.3,
+                            child: _buildMiniatura(img, isSelected),
+                          ),
+
+                          // 3. El component en estat normal (Tap per seleccionar)
+                          child: GestureDetector(
+                            onTap: () {
+                              // Recuperem la teva lògica exacta de tecles!
+                              final isShiftPressed =
+                                  HardwareKeyboard.instance.logicalKeysPressed
+                                      .contains(LogicalKeyboardKey.shiftLeft) ||
+                                  HardwareKeyboard.instance.logicalKeysPressed
+                                      .contains(LogicalKeyboardKey.shiftRight);
+
+                              // Enviem l'acció cap al pare
+                              onAccio(
+                                img.id,
+                                TipusAccio.seleccionar,
+                                multiSelect: isShiftPressed,
+                              );
+                            },
+                            // Posem la UI a dins
+                            child: _buildMiniatura(img, isSelected),
                           ),
                         );
                       }).toList(), // Converteix el resultat del map en una List<Widget>

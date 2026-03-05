@@ -62,7 +62,7 @@ class MainScreen extends StatelessWidget {
               onEsborrar: () => vm.eliminarSeleccionats(),
               onImageDropped: (id) => vm.canviarImatgeMostrada(id),
               onSwipe: (direccio) => vm.navegarImatge(direccio),
-
+              onReorder: (oldIdx, newIdx) => vm.reordenarFotos(oldIdx, newIdx),
               // // // ALERTA // COMPROVAR
             ),
 

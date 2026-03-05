@@ -14,6 +14,29 @@ class MainViewModel extends ChangeNotifier {
   // creem les instancies d'estat al main.
   MainViewModel(this._estatPanell);
 
+  // S1E. Mètode per reordenar la llista d'imatges
+  void reordenarFotos(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return; // Si no es mou, no fem res
+
+    // 1. Creem la còpia mutable per respectar la immutabilitat de l'estat
+    final novaLlista = List<ElementImatge>.from(_estatPanell.llistaImatges);
+
+    // 2. Extraiem l'element de la seva posició original
+    final imatgeMoguda = novaLlista.removeAt(oldIndex);
+    /*
+    // 3. ATENCIÓ: Ajustem el nou índex si estem movent cap endavant
+    // Com que hem tret un element, tots els de la dreta han baixat una posició
+    int indexFinal = newIndex;
+    if (newIndex > oldIndex) {
+      indexFinal -= 1;
+    } */
+
+    // 4. Inserim i actualitzem estat
+    novaLlista.insert(newIndex, imatgeMoguda);
+    _estatPanell = _estatPanell.copyWith(llistaImatges: novaLlista);
+    notifyListeners();
+  }
+
   // Mètode per canviar la imatge pel Drag & Drop
   void canviarImatgeMostrada(int id) {
     _estatPanell = _estatPanell.copyWith(imatgeMostradaId: id);
@@ -23,22 +46,29 @@ class MainViewModel extends ChangeNotifier {
   // Mètode pel Swipe (Dreta / Esquerra) amb int direcció +1/-1
   void navegarImatge(int direccio) {
     if (_estatPanell.llistaImatges.isEmpty) return;
-    // Si no hi ha imatge mostrada, la primera de la llista
+
+    // 1. Quin és l'ID (DNI) de la foto que estem mirant?
     int idActual =
         _estatPanell.imatgeMostradaId ?? _estatPanell.llistaImatges.first.id;
-    // index amb el metode indexWhere de la llista.
+
+    // 2. A quin ÍNDEX (posició 0, 1, 2...) està AQUEST ID en la llista ACTUAL (ja reordenada)?
     int indexActual = _estatPanell.llistaImatges.indexWhere(
       (img) => img.id == idActual,
     );
-    // si no existeix tornarà -1 i cal tornar sense fer res
-    if (indexActual == -1) return;
+    if (indexActual == -1) indexActual = 0; // Per seguretat
 
+    // 3. Ens movem per la posició visual (+1 o -1)
     int nouIndex = indexActual + direccio;
 
-    // Limitem perquè no peti si arribem als extrems
-    if (nouIndex >= 0 && nouIndex < _estatPanell.llistaImatges.length) {
-      canviarImatgeMostrada(_estatPanell.llistaImatges[nouIndex].id);
+    // 4. Gestionem els extrems (per si fem swipe a la primera o última foto)
+    if (nouIndex < 0) {
+      nouIndex = _estatPanell.llistaImatges.length - 1;
+    } else if (nouIndex >= _estatPanell.llistaImatges.length) {
+      nouIndex = 0;
     }
+
+    // 5. Mirem quin ID (DNI) hi ha a la nova posició, i l'enviem a l'estat
+    canviarImatgeMostrada(_estatPanell.llistaImatges[nouIndex].id);
   }
 
   // MÈTODES PER CANVIAR DADES DE L'ESTAT.
@@ -140,9 +170,9 @@ class MainViewModel extends ChangeNotifier {
 
   //  S1D. Nou mètode per esborrar (RA 4.2)
   void eliminarSeleccionats() {
-    if (_estatPanell.seleccionats.isEmpty)
+    if (_estatPanell.seleccionats.isEmpty) {
       return; // Si no tinc selecció, no he de fer res
-
+    }
     // Filtrem la llista d'imatges: només es queden les que NO estan a la llista de seleccionats
     final novaLlistaImatges = _estatPanell
         .llistaImatges // nova variable dinal des d'una llista.

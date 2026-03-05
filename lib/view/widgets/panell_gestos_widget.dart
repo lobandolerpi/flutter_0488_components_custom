@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_0488_components_custom/model/galery_data.dart';
 
+import 'package:flutter/foundation.dart'
+    show kIsWeb; // Per detectar si la app s'està corrents en web
+
 // Mètode d'ajuda per crear la miniatura,
 // Així no he de picar tot això al Component, i queda més net
 Widget _buildMiniatura(
@@ -107,6 +110,7 @@ class PanellInteractiuWidget extends StatelessWidget {
   final VoidCallback onEsborrar; // S1D Nou callback
   final Function(int) onImageDropped;
   final Function(int) onSwipe; // Enviarem -1 (previ) o 1 (següent)
+  final Function(int oldIndex, int newIndex)? onReorder;
 
   // AFEGIM AIXÒ: Un controlador per vincular la barra i la llista
   // final ScrollController _controladorScroll = ScrollController();
@@ -124,6 +128,7 @@ class PanellInteractiuWidget extends StatelessWidget {
     required this.onEsborrar, // S1D nou callback
     required this.onImageDropped,
     required this.onSwipe,
+    required this.onReorder,
     this.colorVora = Colors.transparent, // Valor per defecte
     this.alcada = 200.0, // Valor per defecte
   });
@@ -140,6 +145,16 @@ class PanellInteractiuWidget extends StatelessWidget {
                 : throw Exception('Llista buida'),
           )
         : (imatges.isNotEmpty ? imatges.first : null);
+
+    // DETECTO SI ESTIC A ESCRIPTORI
+    final bool isDesktop =
+        !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+
+    // Variables temporals per calcular el Swipe manualment (No són final)
+    double startX = 0.0;
+    double actualX = 0.0;
+    double startY = 0.0;
+    double actualY = 0.0;
 
     // S1D El Widget ara té MOOOOLTES CAPES NIUADES.
     // flutter diu que primer TECLAT i La jerarquia de Teclat (Shortcuts -> Actions -> Focus)
@@ -175,14 +190,11 @@ class PanellInteractiuWidget extends StatelessWidget {
             // Encara que avui no l'usem, el necessitarem a la Sessió 1D per detectar
             // el "Swipe" (lliscament) per passar la foto gran cap a la dreta o esquerra.
 
-            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            // @@    child: GestureDetector(          @@
+            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            // @@    child: GestureDetector(             @@
             // @@  Atenció: Arena dels gestos, explicar  @@
-            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // Per poder detectar els gestos. De moment no ho farem
-            // TODO
-            // onHorizontalDragEnd: (details) => funcioPerPassarFoto(),
-            // onTapDown: (details) => funcioPerDetectarClicLliure(),
 
             // Column: Per apilar widgets => zones una sobre l'altre..
             child: Column(
@@ -193,17 +205,57 @@ class PanellInteractiuWidget extends StatelessWidget {
                       3, // El pes dintre de la columna. flex 3 i flex 1, significa 3/4 (75%)
                   child: GestureDetector(
                     // GestureDetector (Local): Aquest és específic de la imatge gran
-                    onHorizontalDragEnd: (details) {
-                      // Lambda on puc emprar els detalls del Drag per decidir esquerra o dreta
-                      // Detectem la direcció del swipe a partir de la velocitat (primaryVelocity)
-                      if (details.primaryVelocity! > 0) {
-                        // Arrossega cap a la dreta -> Imatge prèvia
-                        onSwipe(-1);
-                      } else if (details.primaryVelocity! < 0) {
-                        // Arrossega cap a l'esquerra -> Imatge següent
-                        onSwipe(1);
-                      }
-                    },
+                    // ATENCIÓ! Fa que TOTA la capsa (inclòs l'espai buit del Expanded) sigui tàctil
+                    behavior: HitTestBehavior.opaque,
+
+                    onHorizontalDragStart: (isDesktop || kIsWeb)
+                        ? (details) {
+                            // Si som a escriptori o a web millor onHorizontalDragUpdate
+                            startX = details.globalPosition.dx;
+                            startY = details.globalPosition.dy;
+                          }
+                        : null, // Si no som a escriptori ni movil això no s'executa.
+
+                    onHorizontalDragEnd: (isDesktop || kIsWeb)
+                        ? (details) {
+                            // Si som a escriptori o a web aquesta s'executa aquesta versió
+                            actualX = details.globalPosition.dx;
+                            actualY = details.globalPosition.dy;
+                            double diferenciaX = actualX - startX;
+                            double diferenciaY = actualY - startY;
+                            if (diferenciaX.abs() >
+                                    50 // Només si el gest és més de 50 pixels horitzontal
+                                    &&
+                                diferenciaX.abs() >
+                                    2 *
+                                        diferenciaY
+                                            .abs() // clarament horitzontal comparat amb el vertical
+                                            ) {
+                              if (diferenciaX > 0) {
+                                // Moviment positiu (d'esquerra a dreta) -> Imatge prèvia
+                                onSwipe(-1);
+                              } else {
+                                // Moviment negatiu (de dreta a esquerra) -> Imatge següent
+                                onSwipe(1);
+                              }
+                            }
+                          }
+                        : (details) {
+                            // en qualsevol altre cas són a mòbil i el onHorizontalDragEnd va genial
+                            // GUARDRAIL: Evitem que l'app peti si la velocitat és null
+                            final velocitat = details.primaryVelocity;
+
+                            // Si la velocitat és null o 0, ignorem el gest perquè no ha estat un "swipe" net
+                            if (velocitat == null || velocitat == 0) return;
+                            // Detectem la direcció del swipe a partir de la velocitat (primaryVelocity)
+                            if (velocitat > 0) {
+                              // Arrossega cap a la dreta -> Imatge prèvia
+                              onSwipe(-1);
+                            } else if (velocitat < 0) {
+                              // Arrossega cap a l'esquerra -> Imatge següent
+                              onSwipe(1);
+                            }
+                          },
 
                     child: DragTarget<int>(
                       // 'details.data' conté l'ID (int) de la miniatura que hem arrossegat.
@@ -334,49 +386,90 @@ class PanellInteractiuWidget extends StatelessWidget {
                       children: imatges.map((img) {
                         // Mirem si l'ID d'aquesta imatge està dins de la llista de seleccionats
                         final isSelected = seleccionats.contains(img.id);
+                        int currentIndex = imatges.indexOf(img);
 
                         // GestureDetector (Local): Aquest és específic de cada miniatura.
                         // És el que tradueix el toc de l'usuari a la lògica (seleccionar)
-                        return Draggable<int>(
-                          data: img
-                              .id, // La dada que canvia i s'introdueix a la llista del Draggable.
-                          // 1. Com es veu la miniatura mentre vola (Drag)
-                          feedback: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.file(
-                              File(img.path),
-                              width: 70,
-                              height: 70,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                        return DragTarget<int>(
+                          // Acceptem rebre dades si l'ID arrossegat no és el de la imatge actual
+                          onWillAcceptWithDetails: (details) =>
+                              details.data != img.id,
 
-                          // 2. Com es veu el forat que deixa al Wrap
-                          childWhenDragging: Opacity(
-                            opacity: 0.3,
-                            child: _buildMiniatura(img, isSelected),
-                          ),
-
-                          // 3. El component en estat normal (Tap per seleccionar)
-                          child: GestureDetector(
-                            onTap: () {
-                              // Recuperem la teva lògica exacta de tecles!
-                              final isShiftPressed =
-                                  HardwareKeyboard.instance.logicalKeysPressed
-                                      .contains(LogicalKeyboardKey.shiftLeft) ||
-                                  HardwareKeyboard.instance.logicalKeysPressed
-                                      .contains(LogicalKeyboardKey.shiftRight);
-
-                              // Enviem l'acció cap al pare
-                              onAccio(
-                                img.id,
-                                TipusAccio.seleccionar,
-                                multiSelect: isShiftPressed,
+                          onAcceptWithDetails: (details) {
+                            if (onReorder != null) {
+                              // Busquem l'índex antic a partir de l'ID que hem arrossegat
+                              int oldIndex = imatges.indexWhere(
+                                (element) => element.id == details.data,
                               );
-                            },
-                            // Posem la UI a dins
-                            child: _buildMiniatura(img, isSelected),
-                          ),
+                              if (oldIndex != -1) {
+                                onReorder!(oldIndex, currentIndex);
+                              }
+                            }
+                          },
+                          builder: (context, candidateData, rejectedData) {
+                            // Aprofitem candidateData per fer feedback visual de reordenació
+                            bool isBeingTargeted = candidateData.isNotEmpty;
+
+                            // Aquí dins hi va el teu _buildMiniatura() o el Draggable que ja tenies.
+                            // Pots passar-li el isBeingTargeted al _buildMiniatura per posar-li una
+                            // vora verda o fer que es faci una mica més petit quan té una imatge a sobre.
+                            return Container(
+                              decoration: BoxDecoration(
+                                border: isBeingTargeted
+                                    ? Border.all(color: Colors.green, width: 3)
+                                    : null,
+                              ),
+                              child: Draggable<int>(
+                                data: img
+                                    .id, // La dada que canvia i s'introdueix a la llista del Draggable.
+                                // 1. Com es veu la miniatura mentre vola (Drag)
+                                feedback: ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Image.file(
+                                    File(img.path),
+                                    width: 70,
+                                    height: 70,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+
+                                // 2. Com es veu el forat que deixa al Wrap
+                                childWhenDragging: Opacity(
+                                  opacity: 0.3,
+                                  child: _buildMiniatura(img, isSelected),
+                                ),
+
+                                // 3. El component en estat normal (Tap per seleccionar)
+                                child: GestureDetector(
+                                  onTap: () {
+                                    // Recuperem la teva lògica exacta de tecles!
+                                    final isShiftPressed =
+                                        HardwareKeyboard
+                                            .instance
+                                            .logicalKeysPressed
+                                            .contains(
+                                              LogicalKeyboardKey.shiftLeft,
+                                            ) ||
+                                        HardwareKeyboard
+                                            .instance
+                                            .logicalKeysPressed
+                                            .contains(
+                                              LogicalKeyboardKey.shiftRight,
+                                            );
+
+                                    // Enviem l'acció cap al pare
+                                    onAccio(
+                                      img.id,
+                                      TipusAccio.seleccionar,
+                                      multiSelect: isShiftPressed,
+                                    );
+                                  },
+                                  // Posem la UI a dins
+                                  child: _buildMiniatura(img, isSelected),
+                                ),
+                              ),
+                            );
+                          },
                         );
                       }).toList(), // Converteix el resultat del map en una List<Widget>
                     ),

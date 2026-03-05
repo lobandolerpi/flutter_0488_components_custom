@@ -128,7 +128,7 @@ class MainViewModel extends ChangeNotifier {
           }
         }
         // Quan estic de modificar la llista, la faig final
-        final List<ElementImatge> imatgesFinal = List.of(imatges);
+        final List<ElementImatge> imatgesFinal = List.of(imatges.reversed);
         // actualitzo estat i notifico
         _estatPanell = _estatPanell.copyWith(llistaImatges: imatgesFinal);
         notifyListeners();

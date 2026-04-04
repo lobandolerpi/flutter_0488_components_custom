@@ -2,61 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_0488_components_custom/model/galery_data.dart';
+import '../../model/galery_data.dart';
 
-import 'package:flutter/foundation.dart'
-    show kIsWeb; // Per detectar si la app s'està corrents en web
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../view/widgets/miniatura_widget.dart'; // Per detectar si la app s'està corrents en web
 
-// Mètode d'ajuda per crear la miniatura,
-// Així no he de picar tot això al Component, i queda més net
-Widget _buildMiniatura(
-  ElementImatge img,
-  bool isSelected, {
-  bool isHovering = false,
-}) {
-  // RESPONSE 1: MouseRegion per gestionar el cursor
-  return MouseRegion(
-    cursor: isHovering ? SystemMouseCursors.grab : SystemMouseCursors.click,
-
-    // OPCIÓ 2: AnimatedContainer per a la microinteracció visual
-    child: AnimatedContainer(
-      // Animació implícita: Flutter calcula la transició automàticament
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
-
-      // Juguem amb el marge per fer l'efecte d'elevació
-      margin: EdgeInsets.all(isHovering ? 0 : 4),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: isSelected ? Colors.blue : Colors.transparent,
-          width: 2,
-        ),
-        borderRadius: BorderRadius.circular(8),
-        // Afegim una ombra dinàmica
-        boxShadow: isHovering
-            ? [
-                BoxShadow(
-                  //color: Colors.black.withOpacity(0.3),
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4), // Ombra cap avall
-                ),
-              ]
-            : [], // Sense ombra si no hi ha hover
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          // La imatge es fa lleugerament més gran
-          width: isHovering ? 78 : 70,
-          height: isHovering ? 78 : 70,
-          child: Image.file(File(img.path), fit: BoxFit.cover),
-        ),
-      ),
-    ),
-  );
-}
+// S1F, he fet una classe en lloc d'un mètode, perquè és molt millor en temes de rendiment
+//    i encapsulació.
 
 //  S1D Això es un Shortcut, Intent és semblant a GestureDetectors però per accions de teclat.
 // flutter recomana Intents a tecles específiques. El mateix intent es pot disparar amb Del o Supr
@@ -410,8 +362,8 @@ class PanellInteractiuWidget extends StatelessWidget {
                             // Aprofitem candidateData per fer feedback visual de reordenació
                             bool isBeingTargeted = candidateData.isNotEmpty;
 
-                            // Aquí dins hi va el teu _buildMiniatura() o el Draggable que ja tenies.
-                            // Pots passar-li el isBeingTargeted al _buildMiniatura per posar-li una
+                            // Aquí dins hi va el teu MiniaturaWidget() o el Draggable que ja tenies.
+                            // Pots passar-li el isBeingTargeted al MiniaturaWidget per posar-li una
                             // vora verda o fer que es faci una mica més petit quan té una imatge a sobre.
                             return Container(
                               decoration: BoxDecoration(
@@ -436,7 +388,10 @@ class PanellInteractiuWidget extends StatelessWidget {
                                 // 2. Com es veu el forat que deixa al Wrap
                                 childWhenDragging: Opacity(
                                   opacity: 0.3,
-                                  child: _buildMiniatura(img, isSelected),
+                                  child: MiniaturaWidget(
+                                    img: img,
+                                    isSelected: isSelected,
+                                  ),
                                 ),
 
                                 // 3. El component en estat normal (Tap per seleccionar)
@@ -465,7 +420,10 @@ class PanellInteractiuWidget extends StatelessWidget {
                                     );
                                   },
                                   // Posem la UI a dins
-                                  child: _buildMiniatura(img, isSelected),
+                                  child: MiniaturaWidget(
+                                    img: img,
+                                    isSelected: isSelected,
+                                  ),
                                 ),
                               ),
                             );

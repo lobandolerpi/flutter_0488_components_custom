@@ -57,6 +57,10 @@ class PanellInteractiuWidget extends StatelessWidget {
 
   final int? imatgeMostradaId;
 
+  // NOU S1F: Dades vives (Estat de coordenades)
+  final double marcadorX;
+  final double marcadorY;
+
   // 3. Callbacks per a la gestió d'esdeveniments (RA 3.4)
   final void Function(int, TipusAccio, {bool multiSelect})
   onAccio; // Callback complex
@@ -64,6 +68,9 @@ class PanellInteractiuWidget extends StatelessWidget {
   final Function(int) onImageDropped;
   final Function(int) onSwipe; // Enviarem -1 (previ) o 1 (següent)
   final Function(int oldIndex, int newIndex)? onReorder;
+
+  // NOU S1F: El telèfon per avisar d'un clic a la imatge
+  final Function(double, double)? onMarcadorPosat;
 
   // AFEGIM AIXÒ: Un controlador per vincular la barra i la llista
   // final ScrollController _controladorScroll = ScrollController();
@@ -82,6 +89,10 @@ class PanellInteractiuWidget extends StatelessWidget {
     required this.onImageDropped,
     required this.onSwipe,
     required this.onReorder,
+    // NOU S1F: Demanem les variables per constructor
+    required this.marcadorX,
+    required this.marcadorY,
+    this.onMarcadorPosat,
     this.colorVora = Colors.transparent, // Valor per defecte
     this.alcada = 200.0, // Valor per defecte
   });
@@ -148,6 +159,13 @@ class PanellInteractiuWidget extends StatelessWidget {
                     colorVora: colorVora,
                     onSwipe: onSwipe,
                     onImageDropped: onImageDropped,
+
+                    // NOU S1F: Passem les coordenades de l'estat (config)
+                    marcadorX:
+                        marcadorX, // O agafa-ho directe del ViewModel si ho tens al PanellInteractiuWidget
+                    marcadorY: marcadorY,
+                    // NOU S1F: Connectem el callback amb l'exterior (Panell -> Screen -> ViewModel)
+                    onMarcadorPosat: onMarcadorPosat,
                   ),
                 ),
 

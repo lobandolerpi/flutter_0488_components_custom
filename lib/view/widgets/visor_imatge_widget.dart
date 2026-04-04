@@ -11,19 +11,25 @@ double _startY = 0;
 class VisorImatgeWidget extends StatelessWidget {
   final ElementImatge? imatgeGran;
   final Color colorVora;
+  // NOU S1F: Rebem les coordenades
+  final double marcadorX;
+  final double marcadorY;
 
   // Callbacks directes arquitectura perfecta.
   final Function(int) onSwipe;
   final Function(int) onImageDropped;
+  // NOU S1F: El callback per avisar d'un nou clic (Prop Drilling 1 nivell)
   final Function(double, double)? onMarcadorPosat; // Nou de la sessió 1F
 
   const VisorImatgeWidget({
     super.key,
     required this.imatgeGran,
     required this.colorVora,
+    required this.marcadorX,
+    required this.marcadorY,
     required this.onSwipe,
     required this.onImageDropped,
-    this.onMarcadorPosat,
+    required this.onMarcadorPosat,
   });
 
   @override
@@ -133,8 +139,60 @@ class VisorImatgeWidget extends StatelessWidget {
                     : Colors.transparent,
                 BlendMode.lighten,
               ),
+              // S1F
               child: imatgeGran != null
-                  ? Image.file(File(imatgeGran!.path), fit: BoxFit.cover)
+                  ? GestureDetector(
+                      // ATENCIÓ: Capturem el clic exacte per a les coordenades
+                      onTapDown: (TapDownDetails details) {
+                        // Primer s'obté la Box fisica del nostre giny.
+                        final RenderBox box =
+                            context.findRenderObject() as RenderBox;
+                        // Segon converteix les coordenades globals a locals
+                        // dintre d'aquesta Box.
+                        final Offset posicioLocal = box.globalToLocal(
+                          details.globalPosition,
+                        );
+                        // Cridem al callback (Prop drilling en acció)
+                        onMarcadorPosat?.call(posicioLocal.dx, posicioLocal.dy);
+                        // El call només s'executa si no és null
+                      },
+                      child: Stack(
+                        fit: StackFit
+                            .expand, // L'Stack ocupa tot l'espai del Visor
+                        children: [
+                          // Capa 1: La imatge de fons
+                          Image.file(
+                            File(imatgeGran!.path),
+                            fit: BoxFit.contain,
+                          ),
+
+                          // Capa 2: El marcador vermell (només si X i Y són més grans que 0)
+                          if (marcadorX > 0 && marcadorY > 0)
+                            Positioned(
+                              // Restem 10 per centrar exactament el cercle (de mida 20x20)
+                              left: marcadorX - 10,
+                              top: marcadorY - 10,
+                              child: Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: Colors.redAccent,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    )
                   : const Center(child: Text("Cap imatge")),
             ),
           );

@@ -64,6 +64,14 @@ class MainScreen extends StatelessWidget {
               onSwipe: (direccio) => vm.navegarImatge(direccio),
               onReorder: (oldIdx, newIdx) => vm.reordenarFotos(oldIdx, newIdx),
               // // // ALERTA // COMPROVAR
+
+              // NOU S1F: Injectem l'estat de les coordenades del ViewModel
+              marcadorX: vm.estatPanell.posX,
+              marcadorY: vm.estatPanell.posY,
+              onMarcadorPosat: (x, y) {
+                // Quan el Panell ens avisa, ho passem al ViewModel perquè recalculi
+                vm.actualitzarMarcador(x, y);
+              },
             ),
 
             // Afegiu un botó a sota per disparar la lectura inicial:

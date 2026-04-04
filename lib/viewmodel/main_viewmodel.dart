@@ -14,6 +14,17 @@ class MainViewModel extends ChangeNotifier {
   // creem les instancies d'estat al main.
   MainViewModel(this._estatPanell);
 
+  // S1E Mètode per actualitzar posicions x i y
+  void actualitzarMarcador(double x, double y) {
+    _estatPanell = _estatPanell.copyWith(
+      posX: x,
+      posY: y,
+      missatgeGest:
+          "Marcador a: ${x.toStringAsFixed(1)}, ${y.toStringAsFixed(1)}",
+    );
+    notifyListeners();
+  }
+
   // S1E. Mètode per reordenar la llista d'imatges
   void reordenarFotos(int oldIndex, int newIndex) {
     if (oldIndex == newIndex) return; // Si no es mou, no fem res

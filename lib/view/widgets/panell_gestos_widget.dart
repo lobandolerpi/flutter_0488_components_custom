@@ -227,112 +227,117 @@ class PanellInteractiuWidget extends StatelessWidget {
                     // Wrap: Acomoda els elements un al costat de l'altre.
                     // A diferència del Row, quan detecta que no hi caben a la pantalla,
                     // salta a la línia següent automàticament. Evita l'error d'"Overflow".
-                    child: Wrap(
-                      spacing: 10.0, // Espai horitzontal entre les fotos
-                      runSpacing:
-                          10.0, // Espai vertical quan salta a la línia següent
-                      // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
-                      children: imatges.map((img) {
-                        // Mirem si l'ID d'aquesta imatge està dins de la llista de seleccionats
-                        final isSelected = seleccionats.contains(img.id);
-                        int currentIndex = imatges.indexOf(img);
+                    child: ClipRect(
+                      child: Wrap(
+                        spacing: 10.0, // Espai horitzontal entre les fotos
+                        runSpacing:
+                            10.0, // Espai vertical quan salta a la línia següent
+                        // map(): Transforma la llista de dades (ElementImatge) en una llista de ginys (Widgets).
+                        children: imatges.map((img) {
+                          // Mirem si l'ID d'aquesta imatge està dins de la llista de seleccionats
+                          final isSelected = seleccionats.contains(img.id);
+                          int currentIndex = imatges.indexOf(img);
 
-                        // GestureDetector (Local): Aquest és específic de cada miniatura.
-                        // És el que tradueix el toc de l'usuari a la lògica (seleccionar)
-                        return DragTarget<int>(
-                          // Acceptem rebre dades si l'ID arrossegat no és el de la imatge actual
-                          onWillAcceptWithDetails: (details) =>
-                              details.data != img.id,
+                          // GestureDetector (Local): Aquest és específic de cada miniatura.
+                          // És el que tradueix el toc de l'usuari a la lògica (seleccionar)
+                          return DragTarget<int>(
+                            // Acceptem rebre dades si l'ID arrossegat no és el de la imatge actual
+                            onWillAcceptWithDetails: (details) =>
+                                details.data != img.id,
 
-                          onAcceptWithDetails: (details) {
-                            if (onReorder != null) {
-                              // Busquem l'índex antic a partir de l'ID que hem arrossegat
-                              int oldIndex = imatges.indexWhere(
-                                (element) => element.id == details.data,
-                              );
-                              if (oldIndex != -1) {
-                                onReorder!(oldIndex, currentIndex);
+                            onAcceptWithDetails: (details) {
+                              if (onReorder != null) {
+                                // Busquem l'índex antic a partir de l'ID que hem arrossegat
+                                int oldIndex = imatges.indexWhere(
+                                  (element) => element.id == details.data,
+                                );
+                                if (oldIndex != -1) {
+                                  onReorder!(oldIndex, currentIndex);
+                                }
                               }
-                            }
-                          },
-                          builder: (context, candidateData, rejectedData) {
-                            // Aprofitem candidateData per fer feedback visual de reordenació
-                            bool isBeingTargeted = candidateData.isNotEmpty;
+                            },
+                            builder: (context, candidateData, rejectedData) {
+                              // Aprofitem candidateData per fer feedback visual de reordenació
+                              bool isBeingTargeted = candidateData.isNotEmpty;
 
-                            // Aquí dins hi va el teu MiniaturaWidget() o el Draggable que ja tenies.
-                            // Pots passar-li el isBeingTargeted al MiniaturaWidget per posar-li una
-                            // vora verda o fer que es faci una mica més petit quan té una imatge a sobre.
-                            return Container(
-                              decoration: BoxDecoration(
-                                border: isBeingTargeted
-                                    ? Border.all(color: Colors.green, width: 3)
-                                    : null,
-                              ),
-                              child: Draggable<int>(
-                                data: img
-                                    .id, // La dada que canvia i s'introdueix a la llista del Draggable.
-                                // 1. Com es veu la miniatura mentre vola (Drag)
-                                feedback: ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Image.file(
-                                    File(img.path),
-                                    width: 70,
-                                    height: 70,
-                                    fit: BoxFit.cover,
+                              // Aquí dins hi va el teu MiniaturaWidget() o el Draggable que ja tenies.
+                              // Pots passar-li el isBeingTargeted al MiniaturaWidget per posar-li una
+                              // vora verda o fer que es faci una mica més petit quan té una imatge a sobre.
+                              return Container(
+                                decoration: BoxDecoration(
+                                  border: isBeingTargeted
+                                      ? Border.all(
+                                          color: Colors.green,
+                                          width: 3,
+                                        )
+                                      : null,
+                                ),
+                                child: Draggable<int>(
+                                  data: img
+                                      .id, // La dada que canvia i s'introdueix a la llista del Draggable.
+                                  // 1. Com es veu la miniatura mentre vola (Drag)
+                                  feedback: ClipRRect(
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Image.file(
+                                      File(img.path),
+                                      width: 70,
+                                      height: 70,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+
+                                  // 2. Com es veu el forat que deixa al Wrap
+                                  childWhenDragging: Opacity(
+                                    opacity: 0.3,
+                                    // //////////////////////////////////////////////
+                                    // CLASSE MINIATURAWIDGET ENCAPSULADA          //
+                                    // //////////////////////////////////////////////
+                                    child: MiniaturaWidget(
+                                      img: img,
+                                      isSelected: isSelected,
+                                    ),
+                                  ),
+
+                                  // 3. El component en estat normal (Tap per seleccionar)
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      // Recuperem la teva lògica exacta de tecles!
+                                      final isShiftPressed =
+                                          HardwareKeyboard
+                                              .instance
+                                              .logicalKeysPressed
+                                              .contains(
+                                                LogicalKeyboardKey.shiftLeft,
+                                              ) ||
+                                          HardwareKeyboard
+                                              .instance
+                                              .logicalKeysPressed
+                                              .contains(
+                                                LogicalKeyboardKey.shiftRight,
+                                              );
+
+                                      // Enviem l'acció cap al pare
+                                      onAccio(
+                                        img.id,
+                                        TipusAccio.seleccionar,
+                                        multiSelect: isShiftPressed,
+                                      );
+                                    },
+                                    // Posem la UI a dins
+                                    // //////////////////////////////////////////////
+                                    // CLASSE MINIATURAWIDGET ENCAPSULADA          //
+                                    // //////////////////////////////////////////////
+                                    child: MiniaturaWidget(
+                                      img: img,
+                                      isSelected: isSelected,
+                                    ),
                                   ),
                                 ),
-
-                                // 2. Com es veu el forat que deixa al Wrap
-                                childWhenDragging: Opacity(
-                                  opacity: 0.3,
-                                  // //////////////////////////////////////////////
-                                  // CLASSE MINIATURAWIDGET ENCAPSULADA          //
-                                  // //////////////////////////////////////////////
-                                  child: MiniaturaWidget(
-                                    img: img,
-                                    isSelected: isSelected,
-                                  ),
-                                ),
-
-                                // 3. El component en estat normal (Tap per seleccionar)
-                                child: GestureDetector(
-                                  onTap: () {
-                                    // Recuperem la teva lògica exacta de tecles!
-                                    final isShiftPressed =
-                                        HardwareKeyboard
-                                            .instance
-                                            .logicalKeysPressed
-                                            .contains(
-                                              LogicalKeyboardKey.shiftLeft,
-                                            ) ||
-                                        HardwareKeyboard
-                                            .instance
-                                            .logicalKeysPressed
-                                            .contains(
-                                              LogicalKeyboardKey.shiftRight,
-                                            );
-
-                                    // Enviem l'acció cap al pare
-                                    onAccio(
-                                      img.id,
-                                      TipusAccio.seleccionar,
-                                      multiSelect: isShiftPressed,
-                                    );
-                                  },
-                                  // Posem la UI a dins
-                                  // //////////////////////////////////////////////
-                                  // CLASSE MINIATURAWIDGET ENCAPSULADA          //
-                                  // //////////////////////////////////////////////
-                                  child: MiniaturaWidget(
-                                    img: img,
-                                    isSelected: isSelected,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      }).toList(), // Converteix el resultat del map en una List<Widget>
+                              );
+                            },
+                          );
+                        }).toList(), // Converteix el resultat del map en una List<Widget>
+                      ),
                     ),
                   ),
                 ),

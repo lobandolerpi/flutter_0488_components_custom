@@ -3,6 +3,8 @@ import 'package:flutter_0488_components_custom/model/galery_data.dart';
 import 'package:flutter_0488_components_custom/model/panell_ui_state_data.dart';
 import 'dart:math';
 import 'dart:io'; // Per fitxers
+import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as p; // Per poder afagar parts de la ruta.
 
 class MainViewModel extends ChangeNotifier {
   // 1. EL MODEL (Les dades del panell).
@@ -12,7 +14,9 @@ class MainViewModel extends ChangeNotifier {
   // Per estàndards de desacoblament model-viewmodel
   // és millor que el constructor rebi les classes d'estats, no que les crei.
   // creem les instancies d'estat al main.
-  MainViewModel(this._estatPanell);
+  MainViewModel(this._estatPanell) {
+    carregarConfiguracioTxt();
+  }
 
   // S1E Mètode per actualitzar posicions x i y
   void actualitzarMarcador(double x, double y) {
@@ -199,5 +203,119 @@ class MainViewModel extends ChangeNotifier {
     );
 
     notifyListeners();
+  }
+
+  // Future<void> estableix que la funció és asíncrona
+  // Tornarà void quan acabi, però potser triga.
+  Future<void> triarCarpetaICarregar() async {
+    try {
+      // 1. Obrim el selector de directoris natiu
+      String? rutaEscollida = // Torna un string
+          await FilePicker // Await diu que
+              // no s’executi aquesta línia fins rebre avís
+              // que hi ha hagut resposta del S.O.
+              .platform // platform tria el codi nadiu del S.O.
+              .getDirectoryPath // Això obre diàleg de FilePicker
+              (
+                // paràmetres del diàleg File Picker
+                dialogTitle: 'Selecciona la carpeta d\'imatges',
+              );
+
+      if (rutaEscollida == null) return; // L'usuari ha cancel·lat
+
+      final directori = Directory(
+        rutaEscollida,
+      ); // Això és semblant al File de Java
+
+      if (directori.existsSync()) {
+        // 2. Llegim i filtrem només imatges
+        List<FileSystemEntity> fitxers = directori
+            .listSync(); // Què hi ha a la carpeta
+        List<ElementImatge> imatges =
+            <ElementImatge>[]; // Llista d'objectes buida
+        // de moment llista redimensionable
+        int comptador = 0;
+
+        for (var f in fitxers) {
+          // loop per fitxer al directori
+          if (f is File) {
+            String extensio = f.path.toLowerCase();
+            if (extensio.endsWith('.png') ||
+                extensio.endsWith('.jpg') ||
+                extensio.endsWith('.jpeg')) {
+              // Si és fitxer imatge, creo objecte imatge
+              ElementImatge imgNew = ElementImatge(
+                id: comptador,
+                titol: p.basename(f.path), // agafa només el nom
+                path: f.path,
+              );
+              comptador++;
+              imatges.add(imgNew);
+            }
+          }
+        }
+        // Quan estic faig la lista final i la reverteixo
+        final List<ElementImatge> imatgesFinal = List.of(imatges.reversed);
+
+        // 3. Actualitzem l'estat i notifiquem
+        _estatPanell = _estatPanell.copyWith(
+          rutaDades: rutaEscollida,
+          llistaImatges: imatgesFinal,
+          missatgeGest: "Carpeta carregada correctament",
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      // Capturo l'errada
+      _estatPanell = _estatPanell.copyWith(
+        missatgeGest: "Error llegint carpeta",
+        colorVora: Colors.red,
+      );
+      notifyListeners(); // IMPORTANT: Notifiquem també si hi ha error
+      // perquè la UI es redibuixi!
+    }
+  }
+
+  Future<void> desarConfiguracioTxt() async {
+    if (_estatPanell.rutaConfig.isEmpty) return;
+    final fitxerConfig = File(_estatPanell.rutaConfig);
+    // Creem una cadena amb salts de línia
+    String contingut =
+        "${_estatPanell.colorInfoFons.toARGB32()}\n"; // Linia 0 color fons
+    contingut +=
+        "${_estatPanell.colorInfoText.toARGB32()}\n"; // Linia 1 color text
+    contingut += "${_estatPanell.rutaDades}\n"; // Línia 2 ruta fotos
+    try {
+      await fitxerConfig.writeAsString(contingut); // Desem a persistència
+      notifyListeners();
+    } catch (e) {
+      fitxerConfig.parent.createSync(recursive: true);
+      await fitxerConfig.writeAsString(contingut); // Desem a persistència
+      notifyListeners();
+    }
+  }
+
+  void carregarConfiguracioTxt() {
+    if (_estatPanell.rutaConfig.isEmpty) return;
+
+    final fitxerConfig = File(_estatPanell.rutaConfig);
+    if (!fitxerConfig.existsSync()) return;
+
+    // Llegim les línies directament en una llista d'Strings
+    List<String> linies = fitxerConfig.readAsLinesSync();
+
+    if (linies.length >= 3) {
+      // Reconstruïm les dades transformant els tipus
+      Color colorRecuperat1 = Color(int.parse(linies[0]));
+      Color colorRecuperat2 = Color(int.parse(linies[1]));
+      String pathRecuperat = linies[2];
+
+      _estatPanell = _estatPanell.copyWith(
+        colorInfoFons: colorRecuperat1,
+        colorInfoText: colorRecuperat2,
+        rutaDades: pathRecuperat,
+      );
+      notifyListeners();
+    }
   }
 }

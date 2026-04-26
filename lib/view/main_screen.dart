@@ -85,33 +85,35 @@ class MainScreen extends StatelessWidget {
               ), // Una mica d'aire respecte al panell interactiu
               // --- PANELL DE CONTROL INFERIOR --
               SizedBox(
-                height: 80, // Alçada fixa
+                height: 100, // Alçada fixa
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // COLUMNA 1: Feedback Visual Animats
                     Expanded(
-                      flex: 1, // Es reparteixen l'espai a parts iguals (1/3)
+                      flex: 2, // Es reparteixen l'espai a proporcions (2/1/1/1)
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeInOut,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: Colors.blueGrey.shade800, // Color de fons
+                          color: vm.estatPanell.colorInfoFons, // Color de fons
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [
+                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black26,
+                              color: vm.estatPanell.colorInfoFons,
                               blurRadius: 4,
                               offset: Offset(2, 2),
                             ),
                           ],
                         ),
-                        child: const Text(
-                          "Estat:\n Esperant acció...",
+                        child: Text(
+                          "Darrera ruta desada :\n ${vm.estatPanell.rutaDades}",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.white, // Color de la lletra
+                            color: vm
+                                .estatPanell
+                                .colorInfoText, // Color de la lletra
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             shadows: [
@@ -119,7 +121,7 @@ class MainScreen extends StatelessWidget {
                                 // Ombra de les lletres
                                 offset: Offset(1.5, 1.5),
                                 blurRadius: 3.0,
-                                color: Colors.black87,
+                                color: Colors.black54,
                               ),
                             ],
                           ), //RextStyle
@@ -141,22 +143,51 @@ class MainScreen extends StatelessWidget {
                               // Conservem la funcionalitat que ja tenies!
                               onPressed: () =>
                                   vm.carregarImatgesDirectori("./data/imatges"),
-                              icon: const Icon(Icons.refresh),
-                              label: const Text("Carregar fotos per defecte"),
+                              icon: const Icon(Icons.add_a_photo_outlined),
+                              label: const Text("Carrega fotos defecte"),
                             ),
                             const SizedBox(height: 8),
                             ElevatedButton.icon(
                               onPressed: () {
-                                // TODO: Lògica per obrir el File Picker
+                                vm.triarCarpetaICarregar();
                               },
                               icon: const Icon(Icons.folder_open),
-                              label: const Text("Triar Ruta .exe"),
+                              label: const Text("Triar Ruta fotos"),
                             ),
                           ],
                         ),
                       ),
                     ),
-
+                    const SizedBox(width: 12), // Espaiament horitzontal
+                    // COLUMNA 2: Botons de gestió de carpetes
+                    Expanded(
+                      flex: 1,
+                      // SingleChildScrollView evita l'overflow vertical si els botons no hi caben
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ElevatedButton.icon(
+                              // Conservem la funcionalitat que ja tenies!
+                              onPressed: () => vm.carregarImatgesDirectori(
+                                vm.estatPanell.rutaDades,
+                              ),
+                              icon: const Icon(Icons.add_a_photo),
+                              label: const Text("Carregar darreres fotos"),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                //
+                              },
+                              icon: const Icon(Icons.android),
+                              label: const Text("Expai lliure"),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 12), // Espaiament horitzontal
                     // COLUMNA 3: Botons d'accions de la sessió 1G
                     Expanded(
@@ -168,18 +199,18 @@ class MainScreen extends StatelessWidget {
                           children: [
                             ElevatedButton.icon(
                               onPressed: () {
-                                // TODO: Lògica Sessió 1G
+                                vm.desarConfiguracioTxt();
                               },
-                              icon: const Icon(Icons.build),
-                              label: const Text("Generar Executable"),
+                              icon: const Icon(Icons.settings),
+                              label: const Text("Desar Config."),
                             ),
                             const SizedBox(height: 8),
                             ElevatedButton.icon(
                               onPressed: () {
-                                // TODO: Lògica extra / validació
+                                //
                               },
-                              icon: const Icon(Icons.settings),
-                              label: const Text("Opcions extra"),
+                              icon: const Icon(Icons.build),
+                              label: const Text("Canviar Colors"),
                             ),
                           ], // children Column
                         ), //Column

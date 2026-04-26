@@ -10,6 +10,10 @@ class PanellUiState {
   final List<int> seleccionats;
   final List<ElementImatge> llistaImatges;
   final int? imatgeMostradaId;
+  final String rutaDades;
+  final String rutaConfig;
+  final Color colorInfoFons;
+  final Color colorInfoText;
 
   const PanellUiState({
     this.missatgeGest = "Esperant interacció...",
@@ -23,6 +27,10 @@ class PanellUiState {
     // El metode copyWith hauria de rebre una llista nova const
     // quan la modificquem hem de crear una nova i modificarla.
     this.imatgeMostradaId,
+    this.rutaDades = "./data/imatges",
+    this.rutaConfig = "./data/persistencia.txt",
+    this.colorInfoFons = const Color.fromARGB(255, 100, 100, 100),
+    this.colorInfoText = const Color.fromARGB(255, 200, 200, 200),
   });
 
   // Mètode clau (copyWith): Permet crear una còpia de l'estat actual
@@ -36,6 +44,10 @@ class PanellUiState {
     List<int>? seleccionats,
     List<ElementImatge>? llistaImatges,
     int? imatgeMostradaId,
+    String? rutaDades,
+    String? rutaConfig,
+    Color? colorInfoFons,
+    Color? colorInfoText,
   }) {
     return PanellUiState(
       missatgeGest: missatgeGest ?? this.missatgeGest,
@@ -48,6 +60,10 @@ class PanellUiState {
       llistaImatges:
           llistaImatges ?? this.llistaImatges, // ULL AMB AIXÔ JA EN PARLAREM
       imatgeMostradaId: imatgeMostradaId ?? this.imatgeMostradaId,
+      rutaDades: rutaDades ?? this.rutaDades,
+      rutaConfig: rutaConfig ?? this.rutaConfig,
+      colorInfoFons: colorInfoFons ?? this.colorInfoFons,
+      colorInfoText: colorInfoText ?? this.colorInfoText,
     );
   }
 }

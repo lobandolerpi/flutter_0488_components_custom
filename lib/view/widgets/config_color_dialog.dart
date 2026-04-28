@@ -58,14 +58,40 @@ class _ConfigColorDialogState extends State<ConfigColorDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // Creem els objectes color aquí mateix per netejar el codi de sota
+    final actualFons = Color.fromARGB(255, rf, gf, bf);
+    final actualText = Color.fromARGB(255, rt, gt, bt);
+
     return AlertDialog(
       title: const Text("Configurar Colors RGB"),
       content: SingleChildScrollView(
         child: Column(
           children: [
+            // --- SECCIÓ PREVIEW (Molt més visual per l'alumne) ---
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 60,
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: actualFons,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade400),
+              ),
+              child: Center(
+                child: Text(
+                  "Així es veurà el text",
+                  style: TextStyle(
+                    color: actualText,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
             const Text(
-              "Fons de la zona de text",
-              style: TextStyle(color: Colors.blueGrey),
+              "Colors del Fons",
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -74,26 +100,31 @@ class _ConfigColorDialogState extends State<ConfigColorDialog> {
                   label: "R",
                   value: rf,
                   controller: ctrlRF,
-                  onChanged: (v) => rf = v,
-                ),
+                  onChanged: (v) => setState(() => rf = v),
+                ), // ARA SÍ!
                 ColorSpinner(
                   label: "G",
                   value: gf,
                   controller: ctrlGF,
-                  onChanged: (v) => gf = v,
+                  onChanged: (v) => setState(() => gf = v),
                 ),
                 ColorSpinner(
                   label: "B",
                   value: bf,
                   controller: ctrlBF,
-                  onChanged: (v) => bf = v,
+                  onChanged: (v) => setState(() => bf = v),
                 ),
               ],
             ),
-            const Divider(),
+
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Divider(),
+            ),
+
             const Text(
-              "Color del text",
-              style: TextStyle(color: Colors.blueGrey),
+              "Colors del Text",
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -102,19 +133,19 @@ class _ConfigColorDialogState extends State<ConfigColorDialog> {
                   label: "R",
                   value: rt,
                   controller: ctrlRT,
-                  onChanged: (v) => rt = v,
+                  onChanged: (v) => setState(() => rt = v),
                 ),
                 ColorSpinner(
                   label: "G",
                   value: gt,
                   controller: ctrlGT,
-                  onChanged: (v) => gt = v,
+                  onChanged: (v) => setState(() => gt = v),
                 ),
                 ColorSpinner(
                   label: "B",
                   value: bt,
                   controller: ctrlBT,
-                  onChanged: (v) => bt = v,
+                  onChanged: (v) => setState(() => bt = v),
                 ),
               ],
             ),
@@ -128,11 +159,8 @@ class _ConfigColorDialogState extends State<ConfigColorDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            // Retornem els dos nous colors creats des del diàleg
-            Navigator.pop(context, {
-              'fons': Color.fromARGB(255, rf, gf, bf),
-              'text': Color.fromARGB(255, rt, gt, bt),
-            });
+            // Passem el resultat final al ViewModel via la Screen
+            Navigator.pop(context, {'fons': actualFons, 'text': actualText});
           },
           child: const Text("Aplicar i Desar"),
         ),

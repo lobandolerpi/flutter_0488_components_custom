@@ -16,78 +16,111 @@ class ConfigColorDialog extends StatefulWidget {
 }
 
 class _ConfigColorDialogState extends State<ConfigColorDialog> {
-  late int rf, gf, bf; // ESTATS Red, Green, Blue Fons
-  late int rt, gt, bt; // ESTATS Red, Green, Blue Text
+  // 1. Valors d'estat local (esborrany)
+  late int rf, gf, bf, rt, gt, bt;
+
+  // 2. Controladors per als 6 Spinners (perquè apuntin al valor actual)
+  late FixedExtentScrollController ctrlRF,
+      ctrlGF,
+      ctrlBF,
+      ctrlRT,
+      ctrlGT,
+      ctrlBT;
 
   @override
   void initState() {
     super.initState();
-    rf = widget.initialFons.r.toInt();
-    // Nota: Flutter 3.22+ fa servir .r, .g, .b (0.0 a 1.0)
-    gf = widget.initialFons.g.toInt();
-    // O .red, .green, .blue (0 a 255) segons versió.
-    bf = widget.initialFons.b.toInt();
-    rt = widget.initialText.r.toInt();
-    gt = widget.initialText.g.toInt();
-    bt = widget.initialText.b.toInt();
+    // Inicialitzem valors des del color rebut
+    rf = widget.initialFons.red;
+    gf = widget.initialFons.green;
+    bf = widget.initialFons.blue;
+    rt = widget.initialText.red;
+    gt = widget.initialText.green;
+    bt = widget.initialText.blue;
+
+    // Inicialitzem els controladors amb la posició correcta
+    ctrlRF = FixedExtentScrollController(initialItem: rf);
+    ctrlGF = FixedExtentScrollController(initialItem: gf);
+    ctrlBF = FixedExtentScrollController(initialItem: bf);
+    ctrlRT = FixedExtentScrollController(initialItem: rt);
+    ctrlGT = FixedExtentScrollController(initialItem: gt);
+    ctrlBT = FixedExtentScrollController(initialItem: bt);
+  }
+
+  @override
+  void dispose() {
+    // Bona pràctica: Alliberar memòria
+    for (var c in [ctrlRF, ctrlGF, ctrlBF, ctrlRT, ctrlGT, ctrlBT]) {
+      c.dispose();
+    }
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Configuració de Colors"),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text("Color de Fons (RGB)"),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            // Cada vegada que es mou l’Spinner (onChanged)
-            // actualitzem l’estat amb setState
-            // Flutter torna a executar el mètode build del diàleg.
-            children: [
-              ColorSpinner(
-                label: "R",
-                value: rf,
-                onChanged: (v) => setState(() => rf = v),
-              ), // , color: Colors.red
-              ColorSpinner(
-                label: "G",
-                value: gf,
-                onChanged: (v) => setState(() => gf = v),
-              ),
-              ColorSpinner(
-                label: "B",
-                value: bf,
-                onChanged: (v) => setState(() => bf = v),
-              ),
-            ],
-          ),
-          const Divider(),
-          const Text("Color de Text (RGB)"),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ColorSpinner(
-                label: "R",
-                value: rt,
-                onChanged: (v) => setState(() => rt = v),
-              ),
-              ColorSpinner(
-                label: "G",
-                value: gt,
-                onChanged: (v) => setState(() => gt = v),
-              ),
-              ColorSpinner(
-                label: "B",
-                value: bt,
-                onChanged: (v) => setState(() => bt = v),
-              ),
-            ],
-          ),
-        ],
+      title: const Text("Configurar Colors RGB"),
+      content: SingleChildScrollView(
+        child: Column(
+          children: [
+            const Text(
+              "Fons de la zona de text",
+              style: TextStyle(color: Colors.blueGrey),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ColorSpinner(
+                  label: "R",
+                  value: rf,
+                  controller: ctrlRF,
+                  onChanged: (v) => rf = v,
+                ),
+                ColorSpinner(
+                  label: "G",
+                  value: gf,
+                  controller: ctrlGF,
+                  onChanged: (v) => gf = v,
+                ),
+                ColorSpinner(
+                  label: "B",
+                  value: bf,
+                  controller: ctrlBF,
+                  onChanged: (v) => bf = v,
+                ),
+              ],
+            ),
+            const Divider(),
+            const Text(
+              "Color del text",
+              style: TextStyle(color: Colors.blueGrey),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ColorSpinner(
+                  label: "R",
+                  value: rt,
+                  controller: ctrlRT,
+                  onChanged: (v) => rt = v,
+                ),
+                ColorSpinner(
+                  label: "G",
+                  value: gt,
+                  controller: ctrlGT,
+                  onChanged: (v) => gt = v,
+                ),
+                ColorSpinner(
+                  label: "B",
+                  value: bt,
+                  controller: ctrlBT,
+                  onChanged: (v) => bt = v,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
@@ -95,15 +128,13 @@ class _ConfigColorDialogState extends State<ConfigColorDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            final fons = Color.fromARGB(255, rf, gf, bf);
-            final text = Color.fromARGB(255, rt, gt, bt);
-            Navigator.pop(context, {'fons': fons, 'text': text});
+            // Retornem els dos nous colors creats des del diàleg
+            Navigator.pop(context, {
+              'fons': Color.fromARGB(255, rf, gf, bf),
+              'text': Color.fromARGB(255, rt, gt, bt),
+            });
           },
-          // El diàleg no coneix el ViewModel
-          // (per mantenir el desacoblament).
-          // El diàleg simplement "retorna"
-          // un paquet de dades a qui l'ha cridat.
-          child: const Text("Aplicar"),
+          child: const Text("Aplicar i Desar"),
         ),
       ],
     );

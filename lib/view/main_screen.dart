@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_0488_components_custom/view/widgets/config_color_dialog.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/main_viewmodel.dart';
 import '../view/widgets/panell_gestos_widget.dart';
@@ -206,10 +207,26 @@ class MainScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             ElevatedButton.icon(
-                              onPressed: () {
-                                //
+                              onPressed: () async {
+                                final result =
+                                    await showDialog<Map<String, Color>>(
+                                      context: context,
+                                      builder: (context) => ConfigColorDialog(
+                                        initialFons:
+                                            vm.estatPanell.colorInfoFons,
+                                        initialText:
+                                            vm.estatPanell.colorInfoText,
+                                      ),
+                                    );
+
+                                if (result != null) {
+                                  vm.actualitzarConfiguracioColors(
+                                    result['fons']!,
+                                    result['text']!,
+                                  );
+                                }
                               },
-                              icon: const Icon(Icons.build),
+                              icon: const Icon(Icons.palette),
                               label: const Text("Canviar Colors"),
                             ),
                           ], // children Column

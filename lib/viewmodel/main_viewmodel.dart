@@ -318,4 +318,39 @@ class MainViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void actualitzarConfiguracioColors(Color nouFons, Color nouText) {
+    _estatPanell = _estatPanell.copyWith(
+      colorInfoFons: nouFons,
+      colorInfoText: nouText,
+    );
+    notifyListeners();
+    desarConfiguracioTxt(); // Mètode que ja tenies definit
+  }
+
+  /*
+  // Mètode per a l'Slider del Fons
+  void canviarColorFons(double r, double g, double b) {
+    int rInt = r.toInt();
+    int gInt = g.toInt();
+    int bInt = b.toInt();
+    _estatPanell = _estatPanell.copyWith(
+      // Fem servir la intensitat per al vermell, verd i blau (Escala de grisos)
+      colorInfoFons: Color.fromARGB(255, rInt, gInt, bInt),
+    );
+    notifyListeners();
+  }
+
+    // Mètode per a l'Slider del Text
+  void canviarColorText(double r, double g, double b) {
+    int rInt = r.toInt();
+    int gInt = g.toInt();
+    int bInt = b.toInt();
+    _estatPanell = _estatPanell.copyWith(
+      // Fem servir la intensitat per al vermell, verd i blau (Escala de grisos)
+      colorInfoText: Color.fromARGB(255, rInt, gInt, bInt),
+    );
+    notifyListeners();
+  }
+*/
 }
